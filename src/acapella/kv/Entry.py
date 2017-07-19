@@ -67,8 +67,8 @@ class Entry(object):
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
-            'wait-version': wait_version,
-            'wait-timeout': timeout_seconds,
+            'waitVersion': wait_version,
+            'waitTimeout': timeout_seconds,
         })
         raise_if_error(response.status_code)
 
@@ -122,7 +122,7 @@ class Entry(object):
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
-            'old-version': old_version,
+            'oldVersion': old_version,
         }, json=new_value)
         raise_if_error(response.status_code)
 
