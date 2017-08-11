@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from acapella.kv.Entry import Entry
 from acapella.kv.utils.http import AsyncSession, raise_if_error
@@ -53,11 +53,13 @@ class Transaction(object):
         response = await self._session.post(f'/v2/tx/{self._index}/keep-alive')
         raise_if_error(response.status_code)
 
-    async def get_entry(self, key: List[str], n: int = 3, r: int = 2, w: int = 2) -> Entry:
+    async def get_entry(self, partition: List[str], clustering: Optional[List[str]] = None,
+                        n: int = 3, r: int = 2, w: int = 2) -> Entry:
         """        
         Получение значения по указанному ключу в транзакции.
         
-        :param key: ключ
+        :param partition: распределительный ключ
+        :param clustering: сортируемый ключ
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи
@@ -67,22 +69,25 @@ class Transaction(object):
         :raise TransactionCompletedError: когда транзакция, в которой выполняется операция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        entry = self.entry(key, n, r, w)
+        entry = self.entry(partition, clustering, n, r, w)
         await entry.get()
         return entry
 
-    def entry(self, key: List[str], n: int = 3, r: int = 2, w: int = 2) -> Entry:
+    def entry(self, partition: List[str], clustering: Optional[List[str]] = None,
+              n: int = 3, r: int = 2, w: int = 2) -> Entry:
         """
         Создание Entry для указанного ключа в транзакции. Не выполняет никаких запросов.
         Можно использовать, если нет необходимости знать текущие значение и версию.
         
-        :param key: ключ
+        :param partition: распределительный ключ
+        :param clustering: сортируемый ключ
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи
         :return: Entry для указанного ключа
         """
-        return Entry(self._session, key, 0, None, n, r, w, self._index)
+        clustering = clustering or []
+        return Entry(self._session, partition, clustering, 0, None, n, r, w, self._index)
 
     @property
     def index(self) -> int:

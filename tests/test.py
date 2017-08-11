@@ -88,6 +88,55 @@ class TestKvNonTx(TestCase):
         assert entry.version == version
 
 
+class TestKvClustering(TestCase):
+    @async_test
+    async def test_get(self):
+        await session.get_entry(random_key(), random_key())
+
+    @async_test
+    async def test_set(self):
+        await session.entry(random_key(), random_key()).set(random_value())
+
+    @async_test
+    async def test_set_none(self):
+        await session.entry(random_key(), random_key()).set(None)
+
+    @async_test
+    async def test_return_set_value(self):
+        partition = random_key()
+        clustering = random_key()
+        value = random_value()
+        await session.entry(partition, clustering).set(value)
+        assert (await session.get_entry(partition, clustering)).value == value
+
+    @async_test
+    async def test_cas_success(self):
+        partition = random_key()
+        clustering = random_key()
+        value = random_value()
+        await session.entry(partition, clustering).cas(value)
+        assert (await session.get_entry(partition, clustering)).value == value
+
+    @async_test
+    async def test_cas_failed(self):
+        partition = random_key()
+        clustering = random_key()
+        value = random_value()
+        entry = await session.get_entry(partition, clustering)
+        with self.assertRaises(CasError):
+            await entry.cas(value, entry.version + 1)
+
+    @async_test
+    async def test_get_version_returns_valid_version(self):
+        partition = random_key()
+        clustering = random_key()
+        value = random_value()
+        entry = session.entry(partition, clustering)
+        await entry.set(value)
+        version = await session.get_version(partition, clustering)
+        assert entry.version == version
+
+
 class TestKvTx(TestCase):
     @async_test
     async def test_create_tx(self):

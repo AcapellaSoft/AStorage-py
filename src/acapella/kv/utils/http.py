@@ -13,6 +13,12 @@ def key_to_str(key: List[str]) -> str:
     return ':'.join(quote(part) for part in key)
 
 
+def entry_url(partition: List[str], clustering: List[str]) -> str:
+    if len(clustering) == 0:
+        return f'/v2/kv/keys/{key_to_str(partition)}'
+    return f'/v2/kv/partition/{key_to_str(partition)}/clustering/{key_to_str(clustering)}'
+
+
 def raise_if_error(code: int):
     if code == 200:
         return

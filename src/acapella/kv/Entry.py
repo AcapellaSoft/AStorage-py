@@ -1,20 +1,21 @@
 from datetime import timedelta
 from typing import List, Optional
 
-from acapella.kv.utils.http import AsyncSession, raise_if_error, key_to_str
 from acapella.kv.utils.assertion import check_key, check_nrw
+from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url
 
 
 class Entry(object):
-    def __init__(self, session: AsyncSession, key: List[str], version: int, value: Optional[object],
-                 n: int, r: int, w: int, transaction: Optional[int]):
+    def __init__(self, session: AsyncSession, partition: List[str], clustering: List[str],
+                 version: int, value: Optional[object], n: int, r: int, w: int, transaction: Optional[int]):
         """
         Создание объекта связанного с указанным ключом. Этот метод предназначен для внутреннего использования.
         """
-        check_key(key)
+        check_key(partition)
         check_nrw(n, r, w)
         self._session = session
-        self._key = key
+        self._partition = partition
+        self._clustering = clustering
         self._version = version
         self._value = value
         self._n = n
@@ -33,7 +34,8 @@ class Entry(object):
         :raise TransactionCompletedError: когда транзакция, в которой выполняется операция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.get(f'/v2/kv/keys/{key_to_str(self._key)}', params={
+        url = entry_url(self._partition, self._clustering)
+        response = await self._session.get(url, params={
             'n': self._n,
             'r': self._r,
             'w': self._w,
@@ -62,7 +64,8 @@ class Entry(object):
             wait_version = self._version
         timeout_seconds = timeout.total_seconds() if timeout is not None else None
 
-        response = await self._session.get(f'/v2/kv/keys/{key_to_str(self._key)}', params={
+        url = entry_url(self._partition, self._clustering)
+        response = await self._session.get(url, params={
             'n': self._n,
             'r': self._r,
             'w': self._w,
@@ -89,7 +92,8 @@ class Entry(object):
         :raise TransactionCompletedError: когда транзакция, в которой выполняется операция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.put(f'/v2/kv/keys/{key_to_str(self._key)}', params={
+        url = entry_url(self._partition, self._clustering)
+        response = await self._session.put(url, params={
             'n': self._n,
             'r': self._r,
             'w': self._w,
@@ -117,7 +121,8 @@ class Entry(object):
         if old_version is None:
             old_version = self._version
 
-        response = await self._session.put(f'/v2/kv/keys/{key_to_str(self._key)}', params={
+        url = entry_url(self._partition, self._clustering)
+        response = await self._session.put(url, params={
             'n': self._n,
             'r': self._r,
             'w': self._w,
@@ -145,8 +150,15 @@ class Entry(object):
         return self._version
 
     @property
-    def key(self) -> List[str]:
+    def partition(self) -> List[str]:
         """
-        :return: ключ 
+        :return: распределительный ключ
         """
-        return self._key
+        return self._partition
+
+    @property
+    def clustering(self) -> List[str]:
+        """
+        :return: сортируемый ключ
+        """
+        return self._clustering

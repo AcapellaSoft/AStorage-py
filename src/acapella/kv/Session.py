@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 
 import requests
 from requests.adapters import HTTPAdapter, DEFAULT_RETRIES
@@ -8,7 +8,7 @@ from acapella.kv.Entry import Entry
 from acapella.kv.Transaction import Transaction
 from acapella.kv.TransactionContext import TransactionContext
 from acapella.kv.Tree import Tree
-from acapella.kv.utils.http import AsyncSession, raise_if_error, key_to_str
+from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url
 
 
 class Session(object):
@@ -65,11 +65,13 @@ class Session(object):
         index = int(body['index'])
         return Transaction(self._session, index)
 
-    async def get_entry(self, key: List[str], n: int = 3, r: int = 2, w: int = 2) -> Entry:
+    async def get_entry(self, partition: List[str], clustering: Optional[List[str]] = None,
+                        n: int = 3, r: int = 2, w: int = 2) -> Entry:
         """
         Получение значения по указанному ключу вне транзакции.
         
-        :param key: ключ
+        :param partition: распределительный ключ
+        :param clustering: сортируемый ключ
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи
@@ -77,15 +79,18 @@ class Session(object):
         :raise TimeoutError: когда время ожидания запроса истекло
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        entry = Entry(self._session, key, 0, None, n, r, w, None)
+        clustering = clustering or []
+        entry = Entry(self._session, partition, clustering, 0, None, n, r, w, None)
         await entry.get()
         return entry
 
-    async def get_version(self, key: List[str], n: int = 3, r: int = 2, w: int = 2) -> int:
+    async def get_version(self, partition: List[str], clustering: Optional[List[str]] = None,
+                          n: int = 3, r: int = 2, w: int = 2) -> int:
         """
         Получение версии указанного ключа вне транзакции.
 
-        :param key: ключ
+        :param partition: распределительный ключ
+        :param clustering: сортируемый ключ
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи
@@ -93,7 +98,9 @@ class Session(object):
         :raise TimeoutError: когда время ожидания запроса истекло
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.get(f'/v2/kv/keys/{key_to_str(key)}/version', params={
+        clustering = clustering or []
+        url = f'{entry_url(partition, clustering)}/version'
+        response = await self._session.get(url, params={
             'n': n,
             'r': r,
             'w': w,
@@ -102,18 +109,21 @@ class Session(object):
         body = response.json()
         return int(body['version'])
 
-    def entry(self, key: List[str], n: int = 3, r: int = 2, w: int = 2) -> Entry:
+    def entry(self, partition: List[str], clustering: Optional[List[str]] = None,
+              n: int = 3, r: int = 2, w: int = 2) -> Entry:
         """
         Создание Entry для указанного ключа вне транзакции. Не выполняет никаких запросов.
         Можно использовать, если нет необходимости знать текущие значение и версию.
         
-        :param key: ключ
+        :param partition: распределительный ключ
+        :param clustering: сортируемый ключ
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи
         :return: Entry для указанного ключа
         """
-        return Entry(self._session, key, 0, None, n, r, w, None)
+        clustering = clustering or []
+        return Entry(self._session, partition, clustering, 0, None, n, r, w, None)
 
     def tree(self, tree: List[str], n: int = 3, r: int = 2, w: int = 2) -> Tree:
         """
