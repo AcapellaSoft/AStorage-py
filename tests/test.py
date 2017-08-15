@@ -136,6 +136,29 @@ class TestKvClustering(TestCase):
         version = await session.get_version(partition, clustering)
         assert entry.version == version
 
+    @async_test
+    async def test_range(self):
+        partition = random_key()
+        a = ['aaa']
+        b = ['bbb']
+        c = ['ccc']
+
+        await session.entry(partition, a).set('foo')
+        await session.entry(partition, b).set('bar')
+        await session.entry(partition, c).set('baz')
+
+        result = await session.range(partition)
+        assert [a, b, c] == [e.clustering for e in result]
+
+        result = await session.range(partition, first=a)
+        assert [b, c] == [e.clustering for e in result]
+
+        result = await session.range(partition, last=b)
+        assert [a, b] == [e.clustering for e in result]
+
+        result = await session.range(partition, limit=2)
+        assert [a, b] == [e.clustering for e in result]
+
 
 class TestKvTx(TestCase):
     @async_test

@@ -8,7 +8,8 @@ from acapella.kv.Entry import Entry
 from acapella.kv.Transaction import Transaction
 from acapella.kv.TransactionContext import TransactionContext
 from acapella.kv.Tree import Tree
-from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url
+from acapella.kv.utils.assertion import check_key, check_clustering, check_limit
+from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url, key_to_str
 
 
 class Session(object):
@@ -124,6 +125,44 @@ class Session(object):
         """
         clustering = clustering or []
         return Entry(self._session, partition, clustering, 0, None, n, r, w, None)
+
+    async def range(self,
+                    partition: List[str],
+                    first: Optional[List[str]] = None,
+                    last: Optional[List[str]] = None,
+                    limit: Optional[int] = None,
+                    n: int = 3,
+                    r: int = 2,
+                    w: int = 2) -> List[Entry]:
+        """
+        Возвращает отсортированный список ключей в дереве в указанный пределах.
+        :param partition: распределительный ключ
+        :param first: начальный ключ, не включается в ответ; по умолчанию - с первого
+        :param last: последий ключ, включается в ответ; по умолчанию - до последнего включительно
+        :param limit: максимальное количество ключей в ответе, начиная с первого; по умолчанию - нет ограничений
+        :param n: количество реплик
+        :param r: количество ответов для подтверждения чтения
+        :param w: количество ответов для подтверждения записи
+        :return: список объектов Entry с данными
+        :raise TimeoutError: когда время ожидания запроса истекло
+        :raise KvError: когда произошла неизвестная ошибка на сервере
+        """
+        check_key(partition)
+        check_clustering(first)
+        check_clustering(last)
+        check_limit(limit)
+        url = f'/v2/kv/partition/{key_to_str(partition)}'
+        response = await self._session.get(url, params={
+            'from': first,
+            'to': last,
+            'limit': limit,
+            'n': n,
+            'r': r,
+            'w': w,
+        })
+        raise_if_error(response.status_code)
+        body = response.json()
+        return [Entry(self._session, partition, e['key'], e['version'], e['value'], n, r, w, None) for e in body]
 
     def tree(self, tree: List[str], n: int = 3, r: int = 2, w: int = 2) -> Tree:
         """

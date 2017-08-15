@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import AbstractEventLoop
-from typing import List
+from typing import List, Optional, Iterable
 from urllib.parse import quote
 
 from requests import Response
@@ -9,12 +9,12 @@ from requests import Session
 from acapella.kv.utils.errors import CasError, TransactionNotFoundError, TransactionCompletedError, KvError
 
 
-def key_to_str(key: List[str]) -> str:
+def key_to_str(key: Iterable[str]) -> str:
     return ':'.join(quote(part) for part in key)
 
 
-def entry_url(partition: List[str], clustering: List[str]) -> str:
-    if len(clustering) == 0:
+def entry_url(partition: List[str], clustering: Optional[List[str]] = None) -> str:
+    if clustering is None or len(clustering) == 0:
         return f'/v2/kv/keys/{key_to_str(partition)}'
     return f'/v2/kv/partition/{key_to_str(partition)}/clustering/{key_to_str(clustering)}'
 
