@@ -4,6 +4,7 @@ import requests
 from requests.adapters import HTTPAdapter, DEFAULT_RETRIES
 from urllib3 import Retry
 
+from acapella.kv.BatchManual import BatchManual
 from acapella.kv.Entry import Entry
 from acapella.kv.Transaction import Transaction
 from acapella.kv.TransactionContext import TransactionContext
@@ -174,3 +175,6 @@ class Session(object):
         :return: Tree
         """
         return Tree(self._session, tree, n, r, w)
+
+    def batch_manual(self) -> BatchManual:
+        return BatchManual(self._session)

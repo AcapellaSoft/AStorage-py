@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import List, Optional
 
+from acapella.kv.BatchBase import BatchBase
 from acapella.kv.utils.assertion import check_key, check_nrw
 from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url
 
@@ -80,37 +81,46 @@ class Entry(object):
         self._value = body.get('value')
         return self._value
 
-    async def set(self, new_value: Optional[object]) -> int:
+    async def set(self, new_value: Optional[object], batch: Optional[BatchBase] = None) -> int:
         """
         Устанавливает новое значение.
         Запоминает новые значение и версию.        
         
         :param new_value: новое значение
+        :param batch: батч, в котором нужно выполнить запрос
         :return: новая версия
         :raise TimeoutError: когда время ожидания запроса истекло
         :raise TransactionNotFoundError: когда транзакция, в которой выполняется операция, не найдена 
         :raise TransactionCompletedError: когда транзакция, в которой выполняется операция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        url = entry_url(self._partition, self._clustering)
-        response = await self._session.put(url, params={
-            'n': self._n,
-            'r': self._r,
-            'w': self._w,
-            'transaction': self._transaction,
-        }, json=new_value)
-        raise_if_error(response.status_code)
+        if batch is None:
+            url = entry_url(self._partition, self._clustering)
+            response = await self._session.put(url, params={
+                'n': self._n,
+                'r': self._r,
+                'w': self._w,
+                'transaction': self._transaction,
+            }, json=new_value)
+            raise_if_error(response.status_code)
 
-        body = response.json()
-        self._version = int(body['version'])
-        return self._version
+            body = response.json()
+            self._version = int(body['version'])
+            self._value = new_value
+            return self._version
+        else:
+            self._version = await batch.set(self.partition, self.clustering, new_value, self._n, self._r, self._w)
+            self._value = new_value
+            return self._version
 
-    async def cas(self, new_value: Optional[object], old_version: Optional[int] = None) -> int:
+    async def cas(self, new_value: Optional[object], old_version: Optional[int] = None,
+                  batch: Optional[BatchBase] = None) -> int:
         """
         Устанавливает новое значение при совпадении версий.
         
         :param new_value: новое значение
         :param old_version: старая версия; если не указана, то используется текущая версия
+        :param batch: батч, в котором нужно выполнить запрос
         :return: новая версия
         :raise TimeoutError: когда время ожидания запроса истекло
         :raise TransactionNotFoundError: когда транзакция, в которой выполняется операция, не найдена 
@@ -121,19 +131,26 @@ class Entry(object):
         if old_version is None:
             old_version = self._version
 
-        url = entry_url(self._partition, self._clustering)
-        response = await self._session.put(url, params={
-            'n': self._n,
-            'r': self._r,
-            'w': self._w,
-            'transaction': self._transaction,
-            'oldVersion': old_version,
-        }, json=new_value)
-        raise_if_error(response.status_code)
+        if batch is None:
+            url = entry_url(self._partition, self._clustering)
+            response = await self._session.put(url, params={
+                'n': self._n,
+                'r': self._r,
+                'w': self._w,
+                'transaction': self._transaction,
+                'oldVersion': old_version,
+            }, json=new_value)
+            raise_if_error(response.status_code)
 
-        body = response.json()
-        self._version = int(body['version'])
-        return self._version
+            body = response.json()
+            self._version = int(body['version'])
+            self._value = new_value
+            return self._version
+        else:
+            self._version = await batch.cas(self.partition, self.clustering, new_value, old_version,
+                                            self._n, self._r, self._w)
+            self._value = new_value
+            return self._version
 
     @property
     def value(self) -> Optional[object]:

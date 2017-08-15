@@ -363,5 +363,32 @@ class TestDtRange(TestCase):
         assert result[1].value == 'bar'
 
 
+def _async(f):
+    asyncio.ensure_future(f)
+
+
+class TestKvBatch(TestCase):
+    @async_test
+    async def test_batch_set(self):
+        batch = session.batch_manual()
+        p1 = random_key()
+        p2 = random_key()
+
+        _async(session.entry(p1, ['aaa']).set('111', batch))
+        _async(session.entry(p1, ['bbb']).set('222', batch))
+        _async(session.entry(p2, ['aaa']).set('333', batch))
+        _async(session.entry(p2, ['bbb']).set('444', batch))
+        _async(session.entry(p2, ['ccc']).set('555', batch))
+
+        await asyncio.sleep(0)
+        await batch.send()
+
+        assert '111' == (await session.get_entry(p1, ['aaa'])).value
+        assert '222' == (await session.get_entry(p1, ['bbb'])).value
+        assert '333' == (await session.get_entry(p2, ['aaa'])).value
+        assert '444' == (await session.get_entry(p2, ['bbb'])).value
+        assert '555' == (await session.get_entry(p2, ['ccc'])).value
+
+
 if __name__ == '__main__':
     main()
