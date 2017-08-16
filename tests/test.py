@@ -380,7 +380,6 @@ class TestKvBatch(TestCase):
         _async(session.entry(p2, ['bbb']).set('444', batch))
         _async(session.entry(p2, ['ccc']).set('555', batch))
 
-        await asyncio.sleep(0)
         await batch.send()
 
         assert '111' == (await session.get_entry(p1, ['aaa'])).value

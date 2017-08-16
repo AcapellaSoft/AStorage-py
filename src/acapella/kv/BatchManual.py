@@ -1,6 +1,8 @@
 from asyncio import Future
 from typing import List, Optional, Dict, Tuple
 
+import asyncio
+
 from acapella.kv.BatchBase import BatchBase
 from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
 
@@ -79,6 +81,13 @@ class BatchManual(BatchBase):
         return entry.new_version
 
     async def send(self):
+        # если в батче ничего нет, то скорее всего все запросы были
+        # закинуты в event-loop и ещё не выполнились, так что нужно
+        # дать им возможность это сделать
+        if len(self._batch) == 0:
+            # более-менее стандартный способ сделать yield
+            await asyncio.sleep(0)
+
         self._in_process = False
         requests = []
 
