@@ -139,7 +139,7 @@ class TestKvClustering(TestCase):
     @async_test
     async def test_range(self):
         partition = random_key()
-        a = ['aaa']
+        a = ['aaa', 'aaa']
         b = ['bbb']
         c = ['ccc']
 

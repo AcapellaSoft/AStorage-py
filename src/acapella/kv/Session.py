@@ -154,8 +154,8 @@ class Session(object):
         check_limit(limit)
         url = f'/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.get(url, params={
-            'from': first,
-            'to': last,
+            'from': first and key_to_str(first),
+            'to': last and key_to_str(last),
             'limit': limit,
             'n': n,
             'r': r,
