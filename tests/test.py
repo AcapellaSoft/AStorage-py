@@ -159,6 +159,26 @@ class TestKvClustering(TestCase):
         result = await session.range(partition, limit=2)
         assert [a, b] == [e.clustering for e in result]
 
+    @async_test
+    async def test_prefix(self):
+        partition = random_key()
+        a = ['aaa', 'aaa', 'aaa']
+        b = ['aaa', 'bbb', 'bbb']
+        c = ['ccc', 'ccc']
+
+        await session.entry(partition, a).set('foo')
+        await session.entry(partition, b).set('bar')
+        await session.entry(partition, c).set('baz')
+
+        result = await session.range(partition, prefix=['aaa'])
+        assert [a, b] == [e.clustering for e in result]
+
+        result = await session.range(partition, prefix=['aaa', 'aaa'])
+        assert [a] == [e.clustering for e in result]
+
+        result = await session.range(partition, prefix=['ccc'])
+        assert [c] == [e.clustering for e in result]
+
 
 class TestKvTx(TestCase):
     @async_test

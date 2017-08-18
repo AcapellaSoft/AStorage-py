@@ -132,6 +132,7 @@ class Session(object):
                     first: Optional[List[str]] = None,
                     last: Optional[List[str]] = None,
                     limit: Optional[int] = None,
+                    prefix: Optional[List[str]] = None,
                     n: int = 3,
                     r: int = 2,
                     w: int = 2) -> List[Entry]:
@@ -141,6 +142,7 @@ class Session(object):
         :param first: начальный ключ, не включается в ответ; по умолчанию - с первого
         :param last: последий ключ, включается в ответ; по умолчанию - до последнего включительно
         :param limit: максимальное количество ключей в ответе, начиная с первого; по умолчанию - нет ограничений
+        :param prefix: префикс, к которому должны принадлежать все ключи в выборке
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи
@@ -152,11 +154,14 @@ class Session(object):
         check_clustering(first)
         check_clustering(last)
         check_limit(limit)
+        check_clustering(prefix)
+
         url = f'/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.get(url, params={
             'from': first and key_to_str(first),
             'to': last and key_to_str(last),
             'limit': limit,
+            'prefix': prefix and key_to_str(prefix),
             'n': n,
             'r': r,
             'w': w,
