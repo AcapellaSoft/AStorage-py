@@ -383,10 +383,6 @@ class TestDtRange(TestCase):
         assert result[1].value == 'bar'
 
 
-def _async(f):
-    asyncio.ensure_future(f)
-
-
 class TestKvBatch(TestCase):
     @async_test
     async def test_batch_set(self):
@@ -394,11 +390,11 @@ class TestKvBatch(TestCase):
         p1 = random_key()
         p2 = random_key()
 
-        _async(session.entry(p1, ['aaa']).set('111', batch))
-        _async(session.entry(p1, ['bbb']).set('222', batch))
-        _async(session.entry(p2, ['aaa']).set('333', batch))
-        _async(session.entry(p2, ['bbb']).set('444', batch))
-        _async(session.entry(p2, ['ccc']).set('555', batch))
+        session.entry(p1, ['aaa']).set('111', batch)
+        session.entry(p1, ['bbb']).set('222', batch)
+        session.entry(p2, ['aaa']).set('333', batch)
+        session.entry(p2, ['bbb']).set('444', batch)
+        session.entry(p2, ['ccc']).set('555', batch)
 
         await batch.send()
 
@@ -407,6 +403,26 @@ class TestKvBatch(TestCase):
         assert '333' == (await session.get_entry(p2, ['aaa'])).value
         assert '444' == (await session.get_entry(p2, ['bbb'])).value
         assert '555' == (await session.get_entry(p2, ['ccc'])).value
+
+    @async_test
+    async def test_batch_set_awaitable(self):
+        batch = session.batch_manual()
+        p1 = random_key()
+
+        f = session.entry(p1, ['aaa']).set('111', batch)
+        await batch.send()
+
+        asyncio.wait_for(1.0, f)
+
+    @async_test
+    async def test_batch_cas(self):
+        batch = session.batch_manual()
+        p1 = random_key()
+
+        f = session.entry(p1, ['aaa']).cas('111', 0, batch)
+        await batch.send()
+
+        assert '111' == (await session.get_entry(p1, ['aaa'])).value
 
 
 if __name__ == '__main__':
