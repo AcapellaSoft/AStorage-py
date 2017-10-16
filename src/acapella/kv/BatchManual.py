@@ -99,7 +99,7 @@ class BatchManual(BatchBase):
         self._future.set_result(None)
 
     async def _send_partition(self, partition: Tuple[str, ...], batch: PartitionBatch):
-        url = f'/v2/kv/partition/{key_to_str(partition)}'
+        url = f'/astorage/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.put(url, params={
             'n': batch.n,
             'r': batch.r,

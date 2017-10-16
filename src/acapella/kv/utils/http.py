@@ -6,7 +6,8 @@ from urllib.parse import quote
 from requests import Response
 from requests import Session
 
-from acapella.kv.utils.errors import CasError, TransactionNotFoundError, TransactionCompletedError, KvError
+from acapella.kv.utils.errors import CasError, TransactionNotFoundError, TransactionCompletedError, KvError, \
+    AuthenticationFailedError
 
 
 def key_to_str(key: Iterable[str]) -> str:
@@ -15,13 +16,15 @@ def key_to_str(key: Iterable[str]) -> str:
 
 def entry_url(partition: List[str], clustering: Optional[List[str]] = None) -> str:
     if clustering is None or len(clustering) == 0:
-        return f'/v2/kv/keys/{key_to_str(partition)}'
-    return f'/v2/kv/partition/{key_to_str(partition)}/clustering/{key_to_str(clustering)}'
+        return f'/astorage/v2/kv/keys/{key_to_str(partition)}'
+    return f'/astorage/v2/kv/partition/{key_to_str(partition)}/clustering/{key_to_str(clustering)}'
 
 
 def raise_if_error(code: int):
     if code == 200:
         return
+    if code == 401:
+        raise AuthenticationFailedError()
     if code == 408:
         raise TimeoutError()
     if code == 409:
@@ -62,3 +65,6 @@ class AsyncSession(object):
 
     async def delete(self, url, **kwargs) -> Response:
         return await self._async(self._session.delete, self._base_url + url, **kwargs)
+
+    def set_cookie(self, cookies):
+        self._session.cookies = cookies

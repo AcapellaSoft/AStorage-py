@@ -23,7 +23,7 @@ class Transaction(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере         
         """
         if not self._completed:
-            response = await self._session.post(f'/v2/tx/{self._index}/commit')
+            response = await self._session.post(f'/astorage/v2/tx/{self._index}/commit')
             raise_if_error(response.status_code)
             self._completed = True
 
@@ -36,7 +36,7 @@ class Transaction(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         if not self._completed:
-            response = await self._session.post(f'/v2/tx/{self._index}/rollback')
+            response = await self._session.post(f'/astorage/v2/tx/{self._index}/rollback')
             raise_if_error(response.status_code)
             self._completed = True
 
@@ -50,7 +50,7 @@ class Transaction(object):
         :raise TransactionCompletedError: когда транзакция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.post(f'/v2/tx/{self._index}/keep-alive')
+        response = await self._session.post(f'/astorage/v2/tx/{self._index}/keep-alive')
         raise_if_error(response.status_code)
 
     async def get_entry(self, partition: List[str], clustering: Optional[List[str]] = None,

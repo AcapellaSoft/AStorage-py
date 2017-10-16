@@ -55,7 +55,7 @@ class Tree(object):
         last = last or []
         tx_index = transaction.index if transaction is not None else None
 
-        response = await self._session.get(f'/v2/dt/{key_to_str(self._name)}/keys', params={
+        response = await self._session.get(f'/astorage/v2/dt/{key_to_str(self._name)}/keys', params={
             'from': key_to_str(first),
             'to': key_to_str(last),
             'limit': limit,

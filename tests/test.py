@@ -8,13 +8,19 @@ from urllib3 import Retry
 from acapella.kv import Session
 from acapella.kv.utils.errors import CasError
 
+USER = 'user'
+PASSWORD = 'password'
+
 retry = Retry(
     total=3,
     connect=3,
     read=3,
     backoff_factor=0.3
 )
-session = Session(port=12000, max_retries=retry)
+session = Session(port=5678, max_retries=retry)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(session.login(USER, PASSWORD))
 
 
 def async_test(f):
@@ -28,12 +34,12 @@ def async_test(f):
 
 def random_tree():
     c = random.randint(1, 3)
-    return [str(uuid.uuid4()) for _ in range(c)]
+    return [USER] + [str(uuid.uuid4()) for _ in range(c)]
 
 
 def random_key():
     c = random.randint(1, 3)
-    return [str(uuid.uuid4()) for _ in range(c)]
+    return [USER] + [str(uuid.uuid4()) for _ in range(c)]
 
 
 def random_value():
