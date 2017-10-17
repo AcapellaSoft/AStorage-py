@@ -3,6 +3,7 @@ import random
 import uuid
 from unittest import TestCase, main
 
+import requests
 from urllib3 import Retry
 
 from acapella.kv import Session
@@ -18,6 +19,12 @@ retry = Retry(
     backoff_factor=0.3
 )
 session = Session(port=5678, max_retries=retry)
+
+requests.post('http://localhost:5678/auth/signup', json={
+    'username': USER,
+    'password': PASSWORD,
+    'email': 'test@test.ru'
+})
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(session.login(USER, PASSWORD))
