@@ -44,9 +44,14 @@ def random_tree():
     return [USER] + [str(uuid.uuid4()) for _ in range(c)]
 
 
-def random_key():
+def random_partition():
     c = random.randint(1, 3)
     return [USER] + [str(uuid.uuid4()) for _ in range(c)]
+
+
+def random_clustering():
+    c = random.randint(1, 3)
+    return [str(uuid.uuid4()) for _ in range(c)]
 
 
 def random_value():
@@ -59,33 +64,33 @@ def random_value():
 class TestKvNonTx(TestCase):
     @async_test
     async def test_get(self):
-        await session.get_entry(random_key())
+        await session.get_entry(random_partition())
 
     @async_test
     async def test_set(self):
-        await session.entry(random_key()).set(random_value())
+        await session.entry(random_partition()).set(random_value())
 
     @async_test
     async def test_set_none(self):
-        await session.entry(random_key()).set(None)
+        await session.entry(random_partition()).set(None)
 
     @async_test
     async def test_return_set_value(self):
-        key = random_key()
+        key = random_partition()
         value = random_value()
         await session.entry(key).set(value)
         assert (await session.get_entry(key)).value == value
 
     @async_test
     async def test_cas_success(self):
-        key = random_key()
+        key = random_partition()
         value = random_value()
         await session.entry(key).cas(value)
         assert (await session.get_entry(key)).value == value
 
     @async_test
     async def test_cas_failed(self):
-        key = random_key()
+        key = random_partition()
         value = random_value()
         entry = await session.get_entry(key)
         with self.assertRaises(CasError):
@@ -93,7 +98,7 @@ class TestKvNonTx(TestCase):
 
     @async_test
     async def test_get_version_returns_valid_version(self):
-        key = random_key()
+        key = random_partition()
         value = random_value()
         entry = session.entry(key)
         await entry.set(value)
@@ -104,36 +109,36 @@ class TestKvNonTx(TestCase):
 class TestKvClustering(TestCase):
     @async_test
     async def test_get(self):
-        await session.get_entry(random_key(), random_key())
+        await session.get_entry(random_partition(), random_clustering())
 
     @async_test
     async def test_set(self):
-        await session.entry(random_key(), random_key()).set(random_value())
+        await session.entry(random_partition(), random_clustering()).set(random_value())
 
     @async_test
     async def test_set_none(self):
-        await session.entry(random_key(), random_key()).set(None)
+        await session.entry(random_partition(), random_clustering()).set(None)
 
     @async_test
     async def test_return_set_value(self):
-        partition = random_key()
-        clustering = random_key()
+        partition = random_partition()
+        clustering = random_clustering()
         value = random_value()
         await session.entry(partition, clustering).set(value)
         assert (await session.get_entry(partition, clustering)).value == value
 
     @async_test
     async def test_cas_success(self):
-        partition = random_key()
-        clustering = random_key()
+        partition = random_partition()
+        clustering = random_clustering()
         value = random_value()
         await session.entry(partition, clustering).cas(value)
         assert (await session.get_entry(partition, clustering)).value == value
 
     @async_test
     async def test_cas_failed(self):
-        partition = random_key()
-        clustering = random_key()
+        partition = random_partition()
+        clustering = random_clustering()
         value = random_value()
         entry = await session.get_entry(partition, clustering)
         with self.assertRaises(CasError):
@@ -141,8 +146,8 @@ class TestKvClustering(TestCase):
 
     @async_test
     async def test_get_version_returns_valid_version(self):
-        partition = random_key()
-        clustering = random_key()
+        partition = random_partition()
+        clustering = random_clustering()
         value = random_value()
         entry = session.entry(partition, clustering)
         await entry.set(value)
@@ -151,7 +156,7 @@ class TestKvClustering(TestCase):
 
     @async_test
     async def test_range(self):
-        partition = random_key()
+        partition = random_partition()
         a = ['aaa', 'aaa']
         b = ['bbb']
         c = ['ccc']
@@ -174,7 +179,7 @@ class TestKvClustering(TestCase):
 
     @async_test
     async def test_prefix(self):
-        partition = random_key()
+        partition = random_partition()
         a = ['aaa', 'aaa', 'aaa']
         b = ['aaa', 'bbb', 'bbb']
         c = ['ccc', 'ccc']
@@ -206,7 +211,7 @@ class TestKvTx(TestCase):
 
     @async_test
     async def test_old_value_if_rollback(self):
-        key = random_key()
+        key = random_partition()
         async with session.transaction() as tx:
             e = await tx.get_entry(key)
             value = e.value
@@ -219,7 +224,7 @@ class TestKvTx(TestCase):
 
     @async_test
     async def test_rollback_if_error(self):
-        key = random_key()
+        key = random_partition()
         value = None
         try:
             async with session.transaction() as tx:
@@ -236,7 +241,7 @@ class TestKvTx(TestCase):
 
     @async_test
     async def test_see_set_in_other_tx(self):
-        key = random_key()
+        key = random_partition()
         value = random_value()
 
         async with session.transaction() as tx:
@@ -250,16 +255,16 @@ class TestKvTx(TestCase):
 class TestDtNonTx(TestCase):
     @async_test
     async def test_get(self):
-        await session.tree(random_tree()).get_cursor(random_key())
+        await session.tree(random_tree()).get_cursor(random_clustering())
 
     @async_test
     async def test_set(self):
-        await session.tree(random_tree()).cursor(random_key()).set(random_value())
+        await session.tree(random_tree()).cursor(random_clustering()).set(random_value())
 
     @async_test
     async def test_return_set_value(self):
         tree = session.tree(random_tree())
-        key = random_key()
+        key = random_clustering()
         value = random_value()
         await tree.cursor(key).set(value)
         assert value == (await tree.get_cursor(key)).value
@@ -400,8 +405,8 @@ class TestKvBatch(TestCase):
     @async_test
     async def test_batch_set(self):
         batch = session.batch_manual()
-        p1 = random_key()
-        p2 = random_key()
+        p1 = random_partition()
+        p2 = random_partition()
 
         session.entry(p1, ['aaa']).set('111', batch)
         session.entry(p1, ['bbb']).set('222', batch)
@@ -420,7 +425,7 @@ class TestKvBatch(TestCase):
     @async_test
     async def test_batch_set_awaitable(self):
         batch = session.batch_manual()
-        p1 = random_key()
+        p1 = random_partition()
 
         f = session.entry(p1, ['aaa']).set('111', batch)
         await batch.send()
@@ -430,7 +435,7 @@ class TestKvBatch(TestCase):
     @async_test
     async def test_batch_cas(self):
         batch = session.batch_manual()
-        p1 = random_key()
+        p1 = random_partition()
 
         f = session.entry(p1, ['aaa']).cas('111', 0, batch)
         await batch.send()
