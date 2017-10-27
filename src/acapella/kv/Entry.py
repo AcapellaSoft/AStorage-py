@@ -83,12 +83,14 @@ class Entry(object):
         self._value = body.get('value')
         return self._value
 
-    def set(self, new_value: Optional[object], batch: Optional[BatchBase] = None) -> Awaitable[int]:
+    def set(self, new_value: Optional[object], reindex: bool = False,
+            batch: Optional[BatchBase] = None) -> Awaitable[int]:
         """
         Устанавливает новое значение.
         Запоминает новые значение и версию.        
         
         :param new_value: новое значение
+        :param reindex: переиндексировать ключ с новым значением?
         :param batch: батч, в котором нужно выполнить запрос
         :return: новая версия
         :raise TimeoutError: когда время ожидания запроса истекло
@@ -96,20 +98,21 @@ class Entry(object):
         :raise TransactionCompletedError: когда транзакция, в которой выполняется операция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        return single_or_batch(batch, self._set_single, self._set_batch, new_value)
+        return single_or_batch(batch, self._set_single, self._set_batch, new_value, reindex)
 
-    async def _set_batch(self, batch: BatchBase, new_value: Optional[object]):
-        self._version = await batch.set(self.partition, self.clustering, new_value, self._n, self._r, self._w)
+    async def _set_batch(self, batch: BatchBase, new_value: Optional[object], reindex: bool):
+        self._version = await batch.set(self.partition, self.clustering, new_value, reindex, self._n, self._r, self._w)
         self._value = new_value
         return self._version
 
-    async def _set_single(self, new_value: Optional[object]):
+    async def _set_single(self, new_value: Optional[object], reindex: bool):
         url = entry_url(self._partition, self._clustering)
         response = await self._session.put(url, params={
             'n': self._n,
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
+            'reindex': reindex,
         }, json=new_value)
         raise_if_error(response.status_code)
         body = response.json()
@@ -117,13 +120,14 @@ class Entry(object):
         self._value = new_value
         return self._version
 
-    def cas(self, new_value: Optional[object], old_version: Optional[int] = None,
-                  batch: Optional[BatchBase] = None) -> Awaitable[int]:
+    def cas(self, new_value: Optional[object], old_version: Optional[int] = None, reindex: bool = False,
+            batch: Optional[BatchBase] = None) -> Awaitable[int]:
         """
         Устанавливает новое значение при совпадении версий.
         
         :param new_value: новое значение
         :param old_version: старая версия; если не указана, то используется текущая версия
+        :param reindex: переиндексировать ключ с новым значением?
         :param batch: батч, в котором нужно выполнить запрос
         :return: новая версия
         :raise TimeoutError: когда время ожидания запроса истекло
@@ -134,16 +138,16 @@ class Entry(object):
         """
         if old_version is None:
             old_version = self._version
-        return single_or_batch(batch, self._cas_single, self._cas_batch, new_value, old_version)
+        return single_or_batch(batch, self._cas_single, self._cas_batch, new_value, old_version, reindex)
 
-    async def _cas_batch(self, batch: BatchBase, new_value: Optional[object], old_version: int):
+    async def _cas_batch(self, batch: BatchBase, new_value: Optional[object], old_version: int, reindex: bool):
         self._version = await batch.cas(
-            self.partition, self.clustering, new_value, old_version, self._n, self._r, self._w
+            self.partition, self.clustering, new_value, old_version, reindex, self._n, self._r, self._w
         )
         self._value = new_value
         return self._version
 
-    async def _cas_single(self, new_value: Optional[object], old_version: int):
+    async def _cas_single(self, new_value: Optional[object], old_version: int, reindex: bool):
         url = entry_url(self._partition, self._clustering)
         response = await self._session.put(url, params={
             'n': self._n,
@@ -151,6 +155,7 @@ class Entry(object):
             'w': self._w,
             'transaction': self._transaction,
             'oldVersion': old_version,
+            'reindex': reindex,
         }, json=new_value)
         raise_if_error(response.status_code)
         body = response.json()

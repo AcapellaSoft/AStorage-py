@@ -7,6 +7,8 @@ import requests
 from urllib3 import Retry
 
 from acapella.kv import Session
+from acapella.kv.IndexField import IndexField, IndexFieldType, IndexFieldOrder
+from acapella.kv.PartitionIndex import QueryCondition
 from acapella.kv.utils.errors import CasError
 
 USER = 'user'
@@ -408,11 +410,11 @@ class TestKvBatch(TestCase):
         p1 = random_partition()
         p2 = random_partition()
 
-        session.entry(p1, ['aaa']).set('111', batch)
-        session.entry(p1, ['bbb']).set('222', batch)
-        session.entry(p2, ['aaa']).set('333', batch)
-        session.entry(p2, ['bbb']).set('444', batch)
-        session.entry(p2, ['ccc']).set('555', batch)
+        session.entry(p1, ['aaa']).set('111', batch=batch)
+        session.entry(p1, ['bbb']).set('222', batch=batch)
+        session.entry(p2, ['aaa']).set('333', batch=batch)
+        session.entry(p2, ['bbb']).set('444', batch=batch)
+        session.entry(p2, ['ccc']).set('555', batch=batch)
 
         await batch.send()
 
@@ -437,10 +439,62 @@ class TestKvBatch(TestCase):
         batch = session.batch_manual()
         p1 = random_partition()
 
-        f = session.entry(p1, ['aaa']).cas('111', 0, batch)
+        f = session.entry(p1, ['aaa']).cas('111', 0, batch=batch)
         await batch.send()
 
         assert '111' == (await session.get_entry(p1, ['aaa'])).value
+
+
+class IndexTest(TestCase):
+    @async_test
+    async def test_set_index(self):
+        partition = random_partition()
+        user = partition[0]
+        keyspace = partition[1]
+        indexes = {
+            1: [
+                IndexField('foo', IndexFieldType.string, IndexFieldOrder.ascending),
+                IndexField('bar', IndexFieldType.number, IndexFieldOrder.descending),
+            ]
+        }
+
+        await session.set_index(user, keyspace, 1, indexes[1])
+        result = await session.get_indexes(user, keyspace)
+        assert indexes == result
+
+    @async_test
+    async def test_get_indexes_values(self):
+        partition = random_partition()
+        user = partition[0]
+        keyspace = partition[1]
+
+        indexes = {
+            1: [
+                IndexField('foo', IndexFieldType.string, IndexFieldOrder.ascending),
+                IndexField('bar', IndexFieldType.number, IndexFieldOrder.descending),
+            ],
+            2: [
+                IndexField('foo', IndexFieldType.string, IndexFieldOrder.ascending),
+            ]
+        }
+        await session.set_index(user, keyspace, 1, indexes[1])
+        await session.set_index(user, keyspace, 2, indexes[2])
+
+        await (session.entry(partition, ['111']).set({'foo': 'aaa', 'bar': 123}, reindex=True))
+        await (session.entry(partition, ['222']).set({'foo': 'aaa', 'bar': 456}, reindex=True))
+        await (session.entry(partition, ['333']).set({'foo': 'aaa', 'bar': 789}, reindex=True))
+        await (session.entry(partition, ['444']).set({'foo': 'bbb', 'bar': 777}, reindex=True))
+
+        index = session.partition_index(partition)
+
+        result = await index.query({'foo': QueryCondition(eq='aaa')})
+        assert [['111'], ['222'], ['333']] == [e.clustering for e in result]
+
+        result = await index.query({'foo': QueryCondition(eq='bbb')})
+        assert [['444']] == [e.clustering for e in result]
+
+        result = await index.query({'foo': QueryCondition(eq='aaa'), 'bar': QueryCondition(from_=456)})
+        assert [['111'], ['222']] == [e.clustering for e in result]
 
 
 if __name__ == '__main__':
