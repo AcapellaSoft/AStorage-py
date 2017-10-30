@@ -1,4 +1,4 @@
-from typing import List, Union, Optional, Dict
+from typing import List, Union, Optional
 
 import requests
 from requests.adapters import HTTPAdapter, DEFAULT_RETRIES
@@ -8,7 +8,6 @@ from urllib3 import Retry
 
 from acapella.kv.BatchManual import BatchManual
 from acapella.kv.Entry import Entry
-from acapella.kv.IndexField import IndexField
 from acapella.kv.PartitionIndex import PartitionIndex
 from acapella.kv.Transaction import Transaction
 from acapella.kv.TransactionContext import TransactionContext
@@ -201,21 +200,6 @@ class Session(object):
 
     def batch_manual(self) -> BatchManual:
         return BatchManual(self._session)
-
-    async def set_index(self, user: str, keyspace: str, tag: int, fields: List[IndexField]):
-        url = f'/astorage/v2/users/{user}/keyspaces/{keyspace}/indexes/{tag}'
-        response = await self._session.put(url, json={
-            'fields': [f.to_json() for f in fields]
-        })
-        raise_if_error(response.status_code)
-
-    async def get_indexes(self, user: str, keyspace: str) -> Dict[int, List[IndexField]]:
-        url = f'/astorage/v2/users/{user}/keyspaces/{keyspace}/indexes'
-        response = await self._session.get(url)
-        raise_if_error(response.status_code)
-        data = response.json()
-        indexes = data['indexes']
-        return {int(tag): [IndexField.from_json(field) for field in index['fields']] for tag, index in indexes.items()}
 
     def partition_index(self, partition: List[str]) -> PartitionIndex:
         return PartitionIndex(self._session, partition)

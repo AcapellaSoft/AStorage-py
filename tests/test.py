@@ -449,8 +449,8 @@ class IndexTest(TestCase):
     @async_test
     async def test_set_index(self):
         partition = random_partition()
-        user = partition[0]
-        keyspace = partition[1]
+        indexed = session.partition_index(partition)
+
         indexes = {
             1: [
                 IndexField('foo', IndexFieldType.string, IndexFieldOrder.ascending),
@@ -458,15 +458,14 @@ class IndexTest(TestCase):
             ]
         }
 
-        await session.set_index(user, keyspace, 1, indexes[1])
-        result = await session.get_indexes(user, keyspace)
+        await indexed.set_index(1, indexes[1])
+        result = await indexed.get_indexes()
         assert indexes == result
 
     @async_test
     async def test_get_indexes_values(self):
         partition = random_partition()
-        user = partition[0]
-        keyspace = partition[1]
+        indexed = session.partition_index(partition)
 
         indexes = {
             1: [
@@ -477,23 +476,21 @@ class IndexTest(TestCase):
                 IndexField('foo', IndexFieldType.string, IndexFieldOrder.ascending),
             ]
         }
-        await session.set_index(user, keyspace, 1, indexes[1])
-        await session.set_index(user, keyspace, 2, indexes[2])
+        await indexed.set_index(1, indexes[1])
+        await indexed.set_index(2, indexes[2])
 
         await (session.entry(partition, ['111']).set({'foo': 'aaa', 'bar': 123}, reindex=True))
         await (session.entry(partition, ['222']).set({'foo': 'aaa', 'bar': 456}, reindex=True))
         await (session.entry(partition, ['333']).set({'foo': 'aaa', 'bar': 789}, reindex=True))
         await (session.entry(partition, ['444']).set({'foo': 'bbb', 'bar': 777}, reindex=True))
 
-        index = session.partition_index(partition)
-
-        result = await index.query({'foo': QueryCondition(eq='aaa')})
+        result = await indexed.query({'foo': QueryCondition(eq='aaa')})
         assert [['111'], ['222'], ['333']] == [e.clustering for e in result]
 
-        result = await index.query({'foo': QueryCondition(eq='bbb')})
+        result = await indexed.query({'foo': QueryCondition(eq='bbb')})
         assert [['444']] == [e.clustering for e in result]
 
-        result = await index.query({'foo': QueryCondition(eq='aaa'), 'bar': QueryCondition(from_=456)})
+        result = await indexed.query({'foo': QueryCondition(eq='aaa'), 'bar': QueryCondition(from_=456)})
         assert [['111'], ['222']] == [e.clustering for e in result]
 
 
