@@ -19,7 +19,7 @@ class TransactionContext(object):
         if self._tx is not None:
             raise RuntimeError("This transaction context already in entered state")
 
-        response = await self._session.post('/v2/tx')
+        response = await self._session.post('/astorage/v2/tx')
         raise_if_error(response.status_code)
         body = response.json()
         index = int(body['index'])

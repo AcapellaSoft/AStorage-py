@@ -33,7 +33,7 @@ class Cursor(object):
         :raise TreeNotFoundError: когда не найдено дерево
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.get(f'/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}', params={
+        response = await self._session.get(f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}', params={
             'n': self._n,
             'r': self._r,
             'w': self._w,
@@ -60,7 +60,7 @@ class Cursor(object):
         :raise TreeNotFoundError: когда не найдено дерево
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.put(f'/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}', params={
+        response = await self._session.put(f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}', params={
             'n': self._n,
             'r': self._r,
             'w': self._w,
@@ -85,7 +85,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next', params={
+            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next', params={
                 'n': self._n,
                 'r': self._r,
                 'w': self._w,
@@ -111,7 +111,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev', params={
+            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev', params={
                 'n': self._n,
                 'r': self._r,
                 'w': self._w,

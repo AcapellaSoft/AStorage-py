@@ -7,12 +7,13 @@ class BatchBase(object):
     """
 
     async def set(self, partition: List[str], clustering: List[str], new_value: Optional[object],
-                  n: int, r: int, w: int) -> int:
+                  reindex: bool, n: int, r: int, w: int) -> int:
         """
         Добавляет set-запрос в батч. Метод возвращает управление, когда батч будет выполнен.
         :param partition: распределительный ключ
         :param clustering: сортируемый ключ
         :param new_value: новое значение
+        :param reindex: переиндексировать ключ с новым значением?
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи
@@ -23,13 +24,14 @@ class BatchBase(object):
         raise NotImplementedError()
 
     async def cas(self, partition: List[str], clustering: List[str], new_value: Optional[object],
-                  old_version: int, n: int, r: int, w: int) -> int:
+                  old_version: int, reindex: bool, n: int, r: int, w: int) -> int:
         """
         Добавляет cas-запрос в батч. Метод возвращает управление, когда батч будет выполнен.
         :param partition: распределительный ключ
         :param clustering: сортируемый ключ
         :param new_value: новое значение
         :param old_version: версия для сравнения
+        :param reindex: переиндексировать ключ с новым значением?
         :param n: количество реплик
         :param r: количество ответов для подтверждения чтения
         :param w: количество ответов для подтверждения записи

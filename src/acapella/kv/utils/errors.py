@@ -20,3 +20,7 @@ class TransactionNotFoundError(KvError):
 
 class TransactionCompletedError(KvError):
     pass
+
+
+class AuthenticationFailedError(KvError):
+    pass

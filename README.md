@@ -30,6 +30,74 @@
 value = "value 2", version = 2
 ```
 
+Для хранения сложных структур данных введены две части ключа: `partition` и `clustering`. Первый используется для распределения данных по кластеру. Все clustering-ключи в пределах одного partition-ключа лежат вместе на каждой реплике, что обеспечивает возможность выборок и batch-запросов. 
+
+Пример работы со списком пользователей внутри одного partition'а:
+
+```python
+>>> # создание списка
+>>> await session.entry(partition = ["users"], clustering = ["first"]).set({
+>>>     'age': 25
+>>> })
+>>> await session.entry(partition = ["users"], clustering = ["second"]).set({
+>>>     'age': 32
+>>> })
+>>> await session.entry(partition = ["users"], clustering = ["third"]).set({
+>>>     'age': 21
+>>> })
+
+>>> # выборка всех пользователей
+>>> data = await session.range(partition = ["users"])
+>>> for e in data:
+>>>     print(f'{e.key[0]}: {e.value.age}')
+first: 25
+second: 32
+third: 21
+
+>>> # выборка первых 2-х пользователей
+>>> data = await session.range(partition = ["users"], limit = 2)
+>>> for e in data:
+>>>     print(f'{e.key[0]}: {e.value.age}')
+first: 25
+second: 32
+```
+
+Пример работы с очередью:
+
+```python
+>>> # запись событий в очередь по 10 штук
+>>> for i in range(10):
+>>>     # записи производятся в батч, а потом выполняется один запрос
+>>>     batch = BatchManual()
+>>>     for i in range(10):
+>>>         key = str(uuid1())
+>>>         e = session.entry(partition = ["queue-1"], clustering = [key])
+>>>         await e.set(value = i, batch = batch)
+>>>     # выполнение батча
+>>>     await batch.send()
+
+>>> # чтение событий из очереди по 10 штук
+>>> first = []
+>>> for i in rannge(10):
+>>>     data = await session.range(partition = ["queue-1"], first = first, limit = 10)
+>>>     for e in data:
+>>>         print(f'{e.key}: {e.value}')
+>>>     first = data[len(data) - 1].key
+>>> 
+['be2a5d92-8cc0-11e7-8bb2-40e230b5623b']: 0
+['be2a6058-8cc0-11e7-8bb2-40e230b5623b']: 1
+['be2a61f2-8cc0-11e7-8bb2-40e230b5623b']: 2
+...
+['be2ae000-8cc0-11e7-8bb2-40e230b5623b']: 99
+
+>>> # выборка всех событий за определённый интервал времени
+>>> data = await session.range(
+>>>     partition = ["queue-1"],
+>>>     first = ['be2a61f2-8cc0-11e7-8bb2-40e230b5623b'],
+>>>     last =  ['be2a7fac-8cc0-11e7-8bb2-40e230b5623b']
+>>> )
+```
+
 Для работы с деревьями (DT, Distributed Tree) используются классы Tree и Cursor:
 
 ```python
@@ -68,7 +136,7 @@ value = "value 2", version = 2
 
 2) в "ручном" режиме, необходимо явно вызвать commit/rollback при завершении работы с транзакцией
 
-```
+```python
 >>> # создание транзакции
 >>> tx = await session.transaction_manual()
 >>> try:

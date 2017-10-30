@@ -2,10 +2,13 @@ from typing import List, Union, Optional
 
 import requests
 from requests.adapters import HTTPAdapter, DEFAULT_RETRIES
+from requests.auth import HTTPBasicAuth
+from requests.cookies import cookiejar_from_dict
 from urllib3 import Retry
 
 from acapella.kv.BatchManual import BatchManual
 from acapella.kv.Entry import Entry
+from acapella.kv.PartitionIndex import PartitionIndex
 from acapella.kv.Transaction import Transaction
 from acapella.kv.TransactionContext import TransactionContext
 from acapella.kv.Tree import Tree
@@ -28,6 +31,20 @@ class Session(object):
         requests_session.mount('http://', adapter)
         requests_session.mount('https://', adapter)
         self._session = AsyncSession(session=requests_session, base_url=base_url)
+        self._access_token: str = None
+
+    async def login(self, user: Optional[str] = None, password: Optional[str] = None):
+        """
+        Вход под указанным пользователем.
+        :param user: имя пользователя
+        :param password: пароль пользователя
+        """
+        response = await self._session.post('/auth/login', auth=HTTPBasicAuth(user, password))
+        raise_if_error(response.status_code)
+        body = response.json()
+        self._session.set_cookie(cookiejar_from_dict({
+            'token': body['token']
+        }))
 
     def transaction(self) -> TransactionContext:
         """
@@ -61,7 +78,7 @@ class Session(object):
         :raise TimeoutError: когда время ожидания запроса истекло
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.post('/v2/tx')
+        response = await self._session.post('/astorage/v2/tx')
         raise_if_error(response.status_code)
         body = response.json()
         index = int(body['index'])
@@ -156,7 +173,7 @@ class Session(object):
         check_limit(limit)
         check_clustering(prefix)
 
-        url = f'/v2/kv/partition/{key_to_str(partition)}'
+        url = f'/astorage/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.get(url, params={
             'from': first and key_to_str(first),
             'to': last and key_to_str(last),
@@ -183,3 +200,6 @@ class Session(object):
 
     def batch_manual(self) -> BatchManual:
         return BatchManual(self._session)
+
+    def partition_index(self, partition: List[str]) -> PartitionIndex:
+        return PartitionIndex(self._session, partition)
