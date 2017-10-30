@@ -36,7 +36,6 @@ def async_test(f):
     def wrapper(*args, **kwargs):
         coro = asyncio.coroutine(f)
         future = coro(*args, **kwargs)
-        loop = asyncio.get_event_loop()
         loop.run_until_complete(future)
     return wrapper
 
@@ -429,7 +428,7 @@ class TestKvBatch(TestCase):
         batch = session.batch_manual()
         p1 = random_partition()
 
-        f = session.entry(p1, ['aaa']).set('111', batch)
+        f = session.entry(p1, ['aaa']).set('111', batch=batch)
         await batch.send()
 
         asyncio.wait_for(1.0, f)
@@ -439,7 +438,7 @@ class TestKvBatch(TestCase):
         batch = session.batch_manual()
         p1 = random_partition()
 
-        f = session.entry(p1, ['aaa']).cas('111', 0, batch=batch)
+        session.entry(p1, ['aaa']).cas('111', 0, batch=batch)
         await batch.send()
 
         assert '111' == (await session.get_entry(p1, ['aaa'])).value
