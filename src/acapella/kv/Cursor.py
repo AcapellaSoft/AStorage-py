@@ -5,7 +5,7 @@ from acapella.kv.utils.assertion import check_key, check_nrw
 
 
 class Cursor(object):
-    def __init__(self, session: AsyncSession, tree: List[str], key: List[str], version: int, value: Optional[object],
+    def __init__(self, session: AsyncSession, tree: List[str], key: List[str], version: int, value: Optional[any],
                  node: Optional[str], n: int, r: int, w: int, transaction: Optional[int]):
         check_key(tree)
         check_key(key)
@@ -21,7 +21,7 @@ class Cursor(object):
         self._w = w
         self._transaction = transaction
 
-    async def get(self) -> Optional[object]:
+    async def get(self) -> Optional[any]:
         """
         Запрашивает текущее значение с сервера.
         Запоминает новые значение и версию.
@@ -47,7 +47,7 @@ class Cursor(object):
         self._value = body.get('value')
         return self._value
 
-    async def set(self, new_value: Optional[object]) -> int:
+    async def set(self, new_value: Optional[any]) -> int:
         """
         Устанавливает новое значение.
         Запоминает новые значение и версию.
@@ -127,7 +127,7 @@ class Cursor(object):
                       self._n, self._r, self._w, self._transaction)
 
     @property
-    def value(self) -> Optional[object]:
+    def value(self) -> Optional[any]:
         """
         :return: значение 
         """

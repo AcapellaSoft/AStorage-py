@@ -6,7 +6,7 @@ class BatchBase(object):
     Базовый класс для формирования батч-запрсов.
     """
 
-    async def set(self, partition: List[str], clustering: List[str], new_value: Optional[object],
+    async def set(self, partition: List[str], clustering: List[str], new_value: Optional[any],
                   reindex: bool, n: int, r: int, w: int) -> int:
         """
         Добавляет set-запрос в батч. Метод возвращает управление, когда батч будет выполнен.
@@ -23,7 +23,7 @@ class BatchBase(object):
         """
         raise NotImplementedError()
 
-    async def cas(self, partition: List[str], clustering: List[str], new_value: Optional[object],
+    async def cas(self, partition: List[str], clustering: List[str], new_value: Optional[any],
                   old_version: int, reindex: bool, n: int, r: int, w: int) -> int:
         """
         Добавляет cas-запрос в батч. Метод возвращает управление, когда батч будет выполнен.
