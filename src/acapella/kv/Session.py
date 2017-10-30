@@ -69,19 +69,21 @@ class Session(object):
         """
         return TransactionContext(self._session)
 
-    async def transaction_manual(self) -> Transaction:
+    async def transaction_manual(self, index: Optional[int] = None) -> Transaction:
         """
-        Создание транзакции в "ручном режиме". Применение/откат транзакции лежит на клиентском коде.
+        Создание объекта транзакции в "ручном режиме". Применение/откат транзакции лежит на клиентском коде.
         Следует использовать, только если не удаётся работать с транзакцией через `async with`.
-        
+
+        :param index: если указан, то транзакция не создаётся, а просто оборачивается в объект Transaction
         :return: созданная транзакция
         :raise TimeoutError: когда время ожидания запроса истекло
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.post('/astorage/v2/tx')
-        raise_if_error(response.status_code)
-        body = response.json()
-        index = int(body['index'])
+        if index is None:
+            response = await self._session.post('/astorage/v2/tx')
+            raise_if_error(response.status_code)
+            body = response.json()
+            index = int(body['index'])
         return Transaction(self._session, index)
 
     async def get_entry(self, partition: List[str], clustering: Optional[List[str]] = None,
