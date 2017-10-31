@@ -106,8 +106,8 @@ class BatchManual(BatchBase):
             'r': batch.r,
             'w': batch.w,
         }, json=batch.build_request_body())
-        raise_if_error(response.status_code)
-        batch.apply_response(response.json())
+        raise_if_error(response.status)
+        batch.apply_response(await response.json())
 
     def _assert_in_process(self):
         assert self._in_process, "Batch can be used only one time"

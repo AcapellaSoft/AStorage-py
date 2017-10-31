@@ -5,6 +5,7 @@ import asyncio
 
 from acapella.kv.BatchBase import BatchBase
 from acapella.kv.utils.assertion import check_key, check_nrw
+from acapella.kv.utils.collections import remove_none_values
 from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url
 
 
@@ -38,14 +39,14 @@ class Entry(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         url = entry_url(self._partition, self._clustering)
-        response = await self._session.get(url, params={
+        response = await self._session.get(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
-        })
-        raise_if_error(response.status_code)
-        body = response.json()
+        }))
+        raise_if_error(response.status)
+        body = await response.json()
         self._version = int(body['version'])
         self._value = body.get('value')
         return self._value
@@ -68,17 +69,17 @@ class Entry(object):
         timeout_seconds = timeout.total_seconds() if timeout is not None else None
 
         url = entry_url(self._partition, self._clustering)
-        response = await self._session.get(url, params={
+        response = await self._session.get(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
             'waitVersion': wait_version,
             'waitTimeout': timeout_seconds,
-        })
-        raise_if_error(response.status_code)
+        }))
+        raise_if_error(response.status)
 
-        body = response.json()
+        body = await response.json()
         self._version = int(body['version'])
         self._value = body.get('value')
         return self._value
@@ -107,15 +108,15 @@ class Entry(object):
 
     async def _set_single(self, new_value: Optional[any], reindex: bool):
         url = entry_url(self._partition, self._clustering)
-        response = await self._session.put(url, params={
+        response = await self._session.put(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
-            'reindex': reindex,
-        }, json=new_value)
-        raise_if_error(response.status_code)
-        body = response.json()
+            'reindex': str(reindex),
+        }), json=new_value)
+        raise_if_error(response.status)
+        body = await response.json()
         self._version = int(body['version'])
         self._value = new_value
         return self._version
@@ -149,16 +150,16 @@ class Entry(object):
 
     async def _cas_single(self, new_value: Optional[any], old_version: int, reindex: bool):
         url = entry_url(self._partition, self._clustering)
-        response = await self._session.put(url, params={
+        response = await self._session.put(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
             'oldVersion': old_version,
-            'reindex': reindex,
-        }, json=new_value)
-        raise_if_error(response.status_code)
-        body = response.json()
+            'reindex': str(reindex),
+        }), json=new_value)
+        raise_if_error(response.status)
+        body = await response.json()
         self._version = int(body['version'])
         self._value = new_value
         return self._version

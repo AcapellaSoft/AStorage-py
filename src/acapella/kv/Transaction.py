@@ -24,7 +24,7 @@ class Transaction(object):
         """
         if not self._completed:
             response = await self._session.post(f'/astorage/v2/tx/{self._index}/commit')
-            raise_if_error(response.status_code)
+            raise_if_error(response.status)
             self._completed = True
 
     async def rollback(self):
@@ -37,7 +37,7 @@ class Transaction(object):
         """
         if not self._completed:
             response = await self._session.post(f'/astorage/v2/tx/{self._index}/rollback')
-            raise_if_error(response.status_code)
+            raise_if_error(response.status)
             self._completed = True
 
     async def keep_alive(self):
@@ -51,7 +51,7 @@ class Transaction(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.post(f'/astorage/v2/tx/{self._index}/keep-alive')
-        raise_if_error(response.status_code)
+        raise_if_error(response.status)
 
     async def get_entry(self, partition: List[str], clustering: Optional[List[str]] = None,
                         n: int = 3, r: int = 2, w: int = 2) -> Entry:

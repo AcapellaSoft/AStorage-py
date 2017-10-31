@@ -3,6 +3,7 @@ from typing import List, Optional
 from acapella.kv.Cursor import Cursor
 from acapella.kv.Transaction import Transaction
 from acapella.kv.utils.assertion import check_key, check_nrw
+from acapella.kv.utils.collections import remove_none_values
 from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
 
 
@@ -55,18 +56,21 @@ class Tree(object):
         last = last or []
         tx_index = transaction.index if transaction is not None else None
 
-        response = await self._session.get(f'/astorage/v2/dt/{key_to_str(self._name)}/keys', params={
-            'from': key_to_str(first),
-            'to': key_to_str(last),
-            'limit': limit,
-            'n': self._n,
-            'r': self._r,
-            'w': self._w,
-            'transaction': tx_index,
-        })
-        raise_if_error(response.status_code)
+        response = await self._session.get(
+            f'/astorage/v2/dt/{key_to_str(self._name)}/keys',
+            params=remove_none_values({
+                'from': key_to_str(first),
+                'to': key_to_str(last),
+                'limit': limit,
+                'n': self._n,
+                'r': self._r,
+                'w': self._w,
+                'transaction': tx_index,
+            })
+        )
+        raise_if_error(response.status)
 
-        body = response.json()
+        body = await response.json()
 
         def cursor_init(k, v):
             return Cursor(self._session, self._name, k, 0, v, None, self._n, self._r, self._w, tx_index)
