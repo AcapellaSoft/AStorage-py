@@ -10,7 +10,7 @@ from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url
 
 class Entry(object):
     def __init__(self, session: AsyncSession, partition: List[str], clustering: List[str],
-                 version: int, value: Optional[object], n: int, r: int, w: int, transaction: Optional[int]):
+                 version: int, value: Optional[any], n: int, r: int, w: int, transaction: Optional[int]):
         """
         Создание объекта связанного с указанным ключом. Этот метод предназначен для внутреннего использования.
         """
@@ -26,7 +26,7 @@ class Entry(object):
         self._w = w
         self._transaction = transaction
 
-    async def get(self) -> Optional[object]:
+    async def get(self) -> Optional[any]:
         """
         Запрашивает текущее значение с сервера.
         Запоминает новые значение и версию.
@@ -50,7 +50,7 @@ class Entry(object):
         self._value = body.get('value')
         return self._value
 
-    async def listen(self, wait_version: Optional[int] = None, timeout: Optional[timedelta] = None) -> Optional[object]:
+    async def listen(self, wait_version: Optional[int] = None, timeout: Optional[timedelta] = None) -> Optional[any]:
         """
         Ожидает, пока версия значения не превысит указанную. 
         Если ожидание завершилось успешно, запоминает новые значение и версию.
@@ -83,7 +83,7 @@ class Entry(object):
         self._value = body.get('value')
         return self._value
 
-    def set(self, new_value: Optional[object], reindex: bool = False,
+    def set(self, new_value: Optional[any], reindex: bool = False,
             batch: Optional[BatchBase] = None) -> Awaitable[int]:
         """
         Устанавливает новое значение.
@@ -100,12 +100,12 @@ class Entry(object):
         """
         return single_or_batch(batch, self._set_single, self._set_batch, new_value, reindex)
 
-    async def _set_batch(self, batch: BatchBase, new_value: Optional[object], reindex: bool):
+    async def _set_batch(self, batch: BatchBase, new_value: Optional[any], reindex: bool):
         self._version = await batch.set(self.partition, self.clustering, new_value, reindex, self._n, self._r, self._w)
         self._value = new_value
         return self._version
 
-    async def _set_single(self, new_value: Optional[object], reindex: bool):
+    async def _set_single(self, new_value: Optional[any], reindex: bool):
         url = entry_url(self._partition, self._clustering)
         response = await self._session.put(url, params={
             'n': self._n,
@@ -120,7 +120,7 @@ class Entry(object):
         self._value = new_value
         return self._version
 
-    def cas(self, new_value: Optional[object], old_version: Optional[int] = None, reindex: bool = False,
+    def cas(self, new_value: Optional[any], old_version: Optional[int] = None, reindex: bool = False,
             batch: Optional[BatchBase] = None) -> Awaitable[int]:
         """
         Устанавливает новое значение при совпадении версий.
@@ -140,14 +140,14 @@ class Entry(object):
             old_version = self._version
         return single_or_batch(batch, self._cas_single, self._cas_batch, new_value, old_version, reindex)
 
-    async def _cas_batch(self, batch: BatchBase, new_value: Optional[object], old_version: int, reindex: bool):
+    async def _cas_batch(self, batch: BatchBase, new_value: Optional[any], old_version: int, reindex: bool):
         self._version = await batch.cas(
             self.partition, self.clustering, new_value, old_version, reindex, self._n, self._r, self._w
         )
         self._value = new_value
         return self._version
 
-    async def _cas_single(self, new_value: Optional[object], old_version: int, reindex: bool):
+    async def _cas_single(self, new_value: Optional[any], old_version: int, reindex: bool):
         url = entry_url(self._partition, self._clustering)
         response = await self._session.put(url, params={
             'n': self._n,
@@ -164,7 +164,7 @@ class Entry(object):
         return self._version
 
     @property
-    def value(self) -> Optional[object]:
+    def value(self) -> Optional[any]:
         """
         :return: значение 
         """

@@ -8,7 +8,7 @@ from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
 
 
 class BatchEntry(object):
-    def __init__(self, new_value: Optional[object], old_version: Optional[int], reindex: bool):
+    def __init__(self, new_value: Optional[any], old_version: Optional[int], reindex: bool):
         self.new_value = new_value
         self.old_version = old_version
         self.reindex = reindex
@@ -22,14 +22,14 @@ class PartitionBatch(object):
         self.w = w
         self.batch: Dict[Tuple[str, ...], BatchEntry] = {}
 
-    def set(self, clustering: List[str], new_value: Optional[object], reindex: bool) -> BatchEntry:
+    def set(self, clustering: List[str], new_value: Optional[any], reindex: bool) -> BatchEntry:
         key = tuple(clustering)
         entry = BatchEntry(new_value, None, reindex)
         self.__assert_not_set(key)
         self.batch[key] = entry
         return entry
 
-    def cas(self, clustering: List[str], new_value: Optional[object], old_version: int, reindex: bool) -> BatchEntry:
+    def cas(self, clustering: List[str], new_value: Optional[any], old_version: int, reindex: bool) -> BatchEntry:
         key = tuple(clustering)
         entry = BatchEntry(new_value, old_version, reindex)
         self.__assert_not_set(key)
@@ -65,7 +65,7 @@ class BatchManual(BatchBase):
         self._in_process = True
         self._batch: Dict[Tuple[str, ...], PartitionBatch] = {}
 
-    async def set(self, partition: List[str], clustering: List[str], new_value: Optional[object],
+    async def set(self, partition: List[str], clustering: List[str], new_value: Optional[any],
                   reindex: bool, n: int, r: int, w: int) -> int:
         self._assert_in_process()
         partition_batch = self._batch.setdefault(tuple(partition), PartitionBatch(n, r, w))
@@ -73,7 +73,7 @@ class BatchManual(BatchBase):
         await self._future
         return entry.new_version
 
-    async def cas(self, partition: List[str], clustering: List[str], new_value: Optional[object], old_version: int,
+    async def cas(self, partition: List[str], clustering: List[str], new_value: Optional[any], old_version: int,
                   reindex: bool, n: int, r: int, w: int) -> int:
         self._assert_in_process()
         partition_batch = self._batch.setdefault(tuple(partition), PartitionBatch(n, r, w))
