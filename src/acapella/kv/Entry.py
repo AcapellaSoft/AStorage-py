@@ -27,11 +27,12 @@ class Entry(object):
         self._w = w
         self._transaction = transaction
 
-    async def get(self) -> Optional[any]:
+    async def get(self, watch: bool = False) -> Optional[any]:
         """
         Запрашивает текущее значение с сервера.
         Запоминает новые значение и версию.
-        
+
+        :param watch: если true, то блокирует ключ до конца транзакции
         :return: полученное значение
         :raise TimeoutError: когда время ожидания запроса истекло
         :raise TransactionNotFoundError: когда транзакция, в которой выполняется операция, не найдена 
@@ -44,6 +45,7 @@ class Entry(object):
             'r': self._r,
             'w': self._w,
             'transaction': self._transaction,
+            'watch': str(watch),
         }))
         raise_if_error(response.status)
         body = await response.json()
