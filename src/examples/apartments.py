@@ -42,6 +42,8 @@ class Registration:
 
 
 class Persons:
+    # first key part is user-id
+    # second key part is keyspace
     PARTITION = ['examples', 'persons']
 
     def __init__(self, session: Session):
@@ -55,6 +57,9 @@ class Persons:
         await batch.send()
 
     async def create_table(self):
+        # indexes are assigned to keyspace, which is computed out of partition like this:
+        # [user-id, keyspace, some, custom, parts, ...]
+        # all keys in this keyspace will be indexed using this indexes
         indexes = self._session.partition_index(self.PARTITION)
         await indexes.set_index(1, [IndexField('first_name', IndexFieldType.string, IndexFieldOrder.ascending)])
         await indexes.set_index(2, [IndexField('last_name', IndexFieldType.string, IndexFieldOrder.ascending)])
