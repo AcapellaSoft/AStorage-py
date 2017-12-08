@@ -35,7 +35,13 @@ class Session(object):
         :param user: имя пользователя
         :param password: пароль пользователя
         """
-        response = await self._session.post('/auth/login', auth=BasicAuth(user, password))
+        response = await self._session.post(
+            '/auth/login',
+            auth=BasicAuth(user, password),
+            data={
+                'invalidateOld': 'false'
+            }
+        )
         raise_if_error(response.status)
         body = await response.json()
         self._session.set_cookie(cookiejar_from_dict({
