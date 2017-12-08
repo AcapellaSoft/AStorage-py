@@ -189,7 +189,7 @@ class Session(object):
         }))
         raise_if_error(response.status)
         body = await response.json()
-        return [Entry(self._session, partition, e['key'], e['version'], e['value'], n, r, w, None) for e in body]
+        return [Entry(self._session, partition, e['key'], e['version'], e.get('value'), n, r, w, None) for e in body]
 
     def tree(self, tree: List[str], n: int = 3, r: int = 2, w: int = 2) -> Tree:
         """
