@@ -36,6 +36,9 @@ class PartitionBatch(object):
         self.batch[key] = entry
         return entry
 
+    def need_reindex(self) -> bool:
+        return any([e.reindex for e in self.batch.values()])
+
     def build_request_body(self) -> object:
         return [
             {
@@ -105,6 +108,7 @@ class BatchManual(BatchBase):
             'n': batch.n,
             'r': batch.r,
             'w': batch.w,
+            'reindex': str(batch.need_reindex())
         }, json=batch.build_request_body())
         raise_if_error(response.status)
         batch.apply_response(await response.json())
