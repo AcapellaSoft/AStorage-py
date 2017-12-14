@@ -132,10 +132,11 @@ class Model:
         self.accounts = Accounts(session)
         self.transfers = Transfers(session)
 
-    async def init(self):
+    async def drop_all(self):
         await self.accounts.drop_table()
         await self.transfers.drop_table()
 
+    async def create_all(self):
         await self.accounts.create_table()
         await self.transfers.create_table()
 
@@ -169,7 +170,8 @@ async def run():
     # init model
     model = Model(session)
     transactor = Transactor(model)
-    await model.init()
+    await model.drop_all()
+    await model.create_all()
 
     # inserting accounts
     account1 = Account(uuid4(), Decimal(100.0))
