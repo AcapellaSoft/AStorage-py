@@ -3,8 +3,7 @@ from asyncio import AbstractEventLoop
 from typing import List, Optional, Iterable
 from urllib.parse import quote
 
-from requests import Response
-from requests import Session
+from aiohttp import ClientSession, ClientResponse
 
 from acapella.kv.utils.errors import CasError, TransactionNotFoundError, TransactionCompletedError, KvError, \
     AuthenticationFailedError
@@ -37,34 +36,34 @@ def raise_if_error(code: int):
 
 
 class AsyncSession(object):
-    def __init__(self, session: Session = None, loop: AbstractEventLoop = None, base_url: str = ''):
-        self._session = session or Session()
+    def __init__(self, session: ClientSession = None, loop: AbstractEventLoop = None, base_url: str = ''):
+        self._session = session or ClientSession()
         self._loop = loop or asyncio.get_event_loop()
         self._base_url = base_url
 
     def _async(self, fn, *args, **kwargs):
         return self._loop.run_in_executor(None, lambda: fn(*args, **kwargs))
 
-    async def get(self, url, **kwargs) -> Response:
-        return await self._async(self._session.get, self._base_url + url, **kwargs)
+    async def get(self, url, **kwargs) -> ClientResponse:
+        return await self._session.get(self._base_url + url, **kwargs)
 
-    async def options(self, url, **kwargs) -> Response:
-        return await self._async(self._session.options, self._base_url + url, **kwargs)
+    async def options(self, url, **kwargs) -> ClientResponse:
+        return await self._session.options(self._base_url + url, **kwargs)
 
-    async def head(self, url, **kwargs) -> Response:
-        return await self._async(self._session.head, self._base_url + url, **kwargs)
+    async def head(self, url, **kwargs) -> ClientResponse:
+        return await self._session.head(self._base_url + url, **kwargs)
 
-    async def post(self, url, data=None, json=None, **kwargs) -> Response:
-        return await self._async(self._session.post, self._base_url + url, data=data, json=json, **kwargs)
+    async def post(self, url, data=None, json=None, **kwargs) -> ClientResponse:
+        return await self._session.post(self._base_url + url, data=data, json=json, **kwargs)
 
-    async def put(self, url, data=None, **kwargs) -> Response:
-        return await self._async(self._session.put, self._base_url + url, data=data, **kwargs)
+    async def put(self, url, data=None, **kwargs) -> ClientResponse:
+        return await self._session.put(self._base_url + url, data=data, **kwargs)
 
-    async def patch(self, url, data=None, **kwargs) -> Response:
-        return await self._async(self._session.patch, self._base_url + url, data=data, **kwargs)
+    async def patch(self, url, data=None, **kwargs) -> ClientResponse:
+        return await self._session.patch(self._base_url + url, data=data, **kwargs)
 
-    async def delete(self, url, **kwargs) -> Response:
-        return await self._async(self._session.delete, self._base_url + url, **kwargs)
+    async def delete(self, url, **kwargs) -> ClientResponse:
+        return await self._session.delete(self._base_url + url, **kwargs)
 
     def set_cookie(self, cookies):
-        self._session.cookies = cookies
+        self._session.cookie_jar.update_cookies(cookies)

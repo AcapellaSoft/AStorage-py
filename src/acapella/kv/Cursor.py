@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from acapella.kv.utils.collections import remove_none_values
 from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
 from acapella.kv.utils.assertion import check_key, check_nrw
 
@@ -33,15 +34,18 @@ class Cursor(object):
         :raise TreeNotFoundError: когда не найдено дерево
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.get(f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}', params={
-            'n': self._n,
-            'r': self._r,
-            'w': self._w,
-            'transaction': self._transaction,
-        })
-        raise_if_error(response.status_code)
+        response = await self._session.get(
+            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
+            params=remove_none_values({
+                'n': self._n,
+                'r': self._r,
+                'w': self._w,
+                'transaction': self._transaction,
+            })
+        )
+        raise_if_error(response.status)
 
-        body = response.json()
+        body = await response.json()
         # TODO: версия в DT
         # self._version = int(body['version'])
         self._value = body.get('value')
@@ -60,13 +64,17 @@ class Cursor(object):
         :raise TreeNotFoundError: когда не найдено дерево
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.put(f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}', params={
-            'n': self._n,
-            'r': self._r,
-            'w': self._w,
-            'transaction': self._transaction,
-        }, json=new_value)
-        raise_if_error(response.status_code)
+        response = await self._session.put(
+            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
+            params=remove_none_values({
+                'n': self._n,
+                'r': self._r,
+                'w': self._w,
+                'transaction': self._transaction,
+            }),
+            json=new_value
+        )
+        raise_if_error(response.status)
 
         # TODO: версия в DT
         self._value = new_value
@@ -85,18 +93,20 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next', params={
+            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next',
+            params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
                 'w': self._w,
                 'transaction': self._transaction,
                 'node': self._node,
             })
-        if response.status_code == 404:
+        )
+        if response.status == 404:
             return None
-        raise_if_error(response.status_code)
+        raise_if_error(response.status)
 
-        body = response.json()
+        body = await response.json()
         return Cursor(self._session, self._tree, body['key'], 0, body.get('value'), body.get('node'),
                       self._n, self._r, self._w, self._transaction)
 
@@ -111,18 +121,20 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev', params={
+            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev',
+            params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
                 'w': self._w,
                 'transaction': self._transaction,
                 'node': self._node,
             })
-        if response.status_code == 404:
+        )
+        if response.status == 404:
             return None
-        raise_if_error(response.status_code)
+        raise_if_error(response.status)
 
-        body = response.json()
+        body = await response.json()
         return Cursor(self._session, self._tree, body['key'], 0, body.get('value'), body.get('node'),
                       self._n, self._r, self._w, self._transaction)
 

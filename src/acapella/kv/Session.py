@@ -1,8 +1,7 @@
 from typing import List, Union, Optional
 
-import requests
-from requests.adapters import HTTPAdapter, DEFAULT_RETRIES
-from requests.auth import HTTPBasicAuth
+from aiohttp import BasicAuth
+from requests.adapters import DEFAULT_RETRIES
 from requests.cookies import cookiejar_from_dict
 from urllib3 import Retry
 
@@ -13,6 +12,7 @@ from acapella.kv.Transaction import Transaction
 from acapella.kv.TransactionContext import TransactionContext
 from acapella.kv.Tree import Tree
 from acapella.kv.utils.assertion import check_key, check_clustering, check_limit
+from acapella.kv.utils.collections import remove_none_values
 from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url, key_to_str
 
 
@@ -26,11 +26,7 @@ class Session(object):
         :param max_retries: стратегия повторных попыток при таймауте или число повторных попыток
         """
         base_url = f'http://{host}:{port}'
-        requests_session = requests.Session()
-        adapter = HTTPAdapter(max_retries=max_retries)
-        requests_session.mount('http://', adapter)
-        requests_session.mount('https://', adapter)
-        self._session = AsyncSession(session=requests_session, base_url=base_url)
+        self._session = AsyncSession(base_url=base_url)
         self._access_token: str = None
 
     async def login(self, user: Optional[str] = None, password: Optional[str] = None):
@@ -39,9 +35,15 @@ class Session(object):
         :param user: имя пользователя
         :param password: пароль пользователя
         """
-        response = await self._session.post('/auth/login', auth=HTTPBasicAuth(user, password))
-        raise_if_error(response.status_code)
-        body = response.json()
+        response = await self._session.post(
+            '/auth/login',
+            auth=BasicAuth(user, password),
+            data={
+                'invalidateOld': 'false'
+            }
+        )
+        raise_if_error(response.status)
+        body = await response.json()
         self._session.set_cookie(cookiejar_from_dict({
             'token': body['token']
         }))
@@ -81,8 +83,8 @@ class Session(object):
         """
         if index is None:
             response = await self._session.post('/astorage/v2/tx')
-            raise_if_error(response.status_code)
-            body = response.json()
+            raise_if_error(response.status)
+            body = await response.json()
             index = int(body['index'])
         return Transaction(self._session, index)
 
@@ -126,8 +128,8 @@ class Session(object):
             'r': r,
             'w': w,
         })
-        raise_if_error(response.status_code)
-        body = response.json()
+        raise_if_error(response.status)
+        body = await response.json()
         return int(body['version'])
 
     def entry(self, partition: List[str], clustering: Optional[List[str]] = None,
@@ -176,7 +178,7 @@ class Session(object):
         check_clustering(prefix)
 
         url = f'/astorage/v2/kv/partition/{key_to_str(partition)}'
-        response = await self._session.get(url, params={
+        response = await self._session.get(url, params=remove_none_values({
             'from': first and key_to_str(first),
             'to': last and key_to_str(last),
             'limit': limit,
@@ -184,10 +186,10 @@ class Session(object):
             'n': n,
             'r': r,
             'w': w,
-        })
-        raise_if_error(response.status_code)
-        body = response.json()
-        return [Entry(self._session, partition, e['key'], e['version'], e['value'], n, r, w, None) for e in body]
+        }))
+        raise_if_error(response.status)
+        body = await response.json()
+        return [Entry(self._session, partition, e['key'], e['version'], e.get('value'), n, r, w, None) for e in body]
 
     def tree(self, tree: List[str], n: int = 3, r: int = 2, w: int = 2) -> Tree:
         """

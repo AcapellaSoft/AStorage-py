@@ -39,8 +39,8 @@ class PartitionIndex(object):
             },
             'query': {field: cond.to_json() for field, cond in query.items()}
         })
-        raise_if_error(response.status_code)
-        data = response.json()
+        raise_if_error(response.status)
+        data = await response.json()
         return [Entry(self._session, self._partition, e['key'], 0, e.get('value'), 3, 2, 2, None) for e in data]
 
     async def set_index(self, tag: int, fields: List[IndexField]):
@@ -48,12 +48,12 @@ class PartitionIndex(object):
         response = await self._session.put(url, json={
             'fields': [f.to_json() for f in fields]
         })
-        raise_if_error(response.status_code)
+        raise_if_error(response.status)
 
     async def get_indexes(self) -> Dict[int, List[IndexField]]:
         url = f'/astorage/v2/users/{self._user}/keyspaces/{self._keyspace}/indexes'
         response = await self._session.get(url)
-        raise_if_error(response.status_code)
-        data = response.json()
+        raise_if_error(response.status)
+        data = await response.json()
         indexes = data['indexes']
         return {int(tag): [IndexField.from_json(field) for field in index['fields']] for tag, index in indexes.items()}
