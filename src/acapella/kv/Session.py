@@ -1,8 +1,8 @@
+import base64
 from typing import List, Union, Optional
 
 from aiohttp import BasicAuth
 from requests.adapters import DEFAULT_RETRIES
-from requests.cookies import cookiejar_from_dict
 from urllib3 import Retry
 
 from acapella.kv.BatchManual import BatchManual
@@ -27,7 +27,11 @@ class Session(object):
         """
         base_url = f'http://{host}:{port}'
         self._session = AsyncSession(base_url=base_url)
-        self._access_token: str = None
+
+    @staticmethod
+    def _format_basic_auth(user: str, password: str) -> str:
+        user_and_password = user + ':' + password
+        return base64.standard_b64encode(user_and_password.encode()).decode()
 
     async def login(self, user: Optional[str] = None, password: Optional[str] = None):
         """
@@ -37,16 +41,16 @@ class Session(object):
         """
         response = await self._session.post(
             '/auth/login',
-            auth=BasicAuth(user, password),
             data={
-                'invalidateOld': 'false'
+                'enableCookies': 'true',
+                'invalidateOld': 'false',
+                'loginAndPassword': self._format_basic_auth(user, password)
             }
         )
         raise_if_error(response.status)
         body = await response.json()
-        self._session.set_cookie(cookiejar_from_dict({
-            'token': body['token']
-        }))
+        token = body['token']
+        self._session.set_auth(BasicAuth(user, token))
 
     def transaction(self) -> TransactionContext:
         """
