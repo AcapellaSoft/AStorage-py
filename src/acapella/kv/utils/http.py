@@ -40,30 +40,36 @@ class AsyncSession(object):
         self._session = session or ClientSession()
         self._loop = loop or asyncio.get_event_loop()
         self._base_url = base_url
+        self._auth = None
 
-    def _async(self, fn, *args, **kwargs):
-        return self._loop.run_in_executor(None, lambda: fn(*args, **kwargs))
+    async def _request(self, method, url, **kwargs):
+        kwargs = {'auth': self._auth, **kwargs}
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        return await self._session.request(method, self._base_url + url, **kwargs)
 
     async def get(self, url, **kwargs) -> ClientResponse:
-        return await self._session.get(self._base_url + url, **kwargs)
+        return await self._request('get', url, **kwargs)
 
     async def options(self, url, **kwargs) -> ClientResponse:
-        return await self._session.options(self._base_url + url, **kwargs)
+        return await self._request('options', url, **kwargs)
 
     async def head(self, url, **kwargs) -> ClientResponse:
-        return await self._session.head(self._base_url + url, **kwargs)
+        return await self._request('head', url, **kwargs)
 
     async def post(self, url, data=None, json=None, **kwargs) -> ClientResponse:
-        return await self._session.post(self._base_url + url, data=data, json=json, **kwargs)
+        return await self._request('post', url, data=data, json=json, **kwargs)
 
     async def put(self, url, data=None, **kwargs) -> ClientResponse:
-        return await self._session.put(self._base_url + url, data=data, **kwargs)
+        return await self._request('put', url, data=data, **kwargs)
 
     async def patch(self, url, data=None, **kwargs) -> ClientResponse:
-        return await self._session.patch(self._base_url + url, data=data, **kwargs)
+        return await self._request('patch', url, data=data, **kwargs)
 
     async def delete(self, url, **kwargs) -> ClientResponse:
-        return await self._session.delete(self._base_url + url, **kwargs)
+        return await self._request('delete', url, **kwargs)
 
     def set_cookie(self, cookies):
         self._session.cookie_jar.update_cookies(cookies)
+
+    def set_auth(self, auth):
+        self._auth = auth
