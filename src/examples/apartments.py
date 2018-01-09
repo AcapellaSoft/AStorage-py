@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from acapella.kv import Session
 from acapella.kv.IndexField import IndexField, IndexFieldType, IndexFieldOrder
 from acapella.kv.PartitionIndex import QueryCondition
+from examples.credentials import USER_NAME, PASSWORD
 
 
 class Person:
@@ -44,7 +45,7 @@ class Registration:
 class Persons:
     # first key part is user-id
     # second key part is keyspace
-    PARTITION = ['examples', 'persons']
+    PARTITION = [USER_NAME, 'persons']
 
     def __init__(self, session: Session):
         self._session = session
@@ -109,7 +110,7 @@ class Persons:
 
 
 class Apartments:
-    PARTITION = ['examples', 'apartments']
+    PARTITION = [USER_NAME, 'apartments']
 
     def __init__(self, session: Session):
         self._session = session
@@ -155,7 +156,7 @@ class Apartments:
 
 
 class Registrations:
-    PARTITION = ['examples', 'registrations']
+    PARTITION = [USER_NAME, 'registrations']
 
     def __init__(self, session: Session):
         self._session = session
@@ -226,8 +227,8 @@ class Registrations:
 
 async def run():
     # init database
-    session = Session(port=5678)
-    await session.login('examples', 'examples')
+    session = Session(host='api.acapella.ru', port=5678)
+    await session.login(USER_NAME, PASSWORD)
 
     # init persons table
     persons = Persons(session)
