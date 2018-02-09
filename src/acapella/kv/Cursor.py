@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from acapella.kv.consts import API_PREFIX
 from acapella.kv.utils.collections import remove_none_values
 from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
 from acapella.kv.utils.assertion import check_key, check_nrw
@@ -35,7 +36,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
+            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
@@ -65,7 +66,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.put(
-            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
+            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
@@ -93,7 +94,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next',
+            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
@@ -121,7 +122,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'/astorage/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev',
+            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,

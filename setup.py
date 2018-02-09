@@ -2,9 +2,9 @@
 
 from distutils.core import setup
 
-setup(name='astorage',
-      version='0.2.1',
-      description='Python client for AStorage database',
+setup(name='acapelladb',
+      version='0.3.2',
+      description='Python client for AcapellaDB database',
       url='https://srv.nppsatek.ru:42917/hiload/AStorageClient-py',
       package_dir={'': 'src'},
       packages=['acapella.kv'],

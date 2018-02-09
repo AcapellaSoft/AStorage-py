@@ -4,6 +4,7 @@ from typing import Optional, List, Tuple
 from uuid import UUID, uuid1, uuid4
 
 from acapella.kv import Session, Transaction
+from examples.credentials import USER_NAME, PASSWORD
 
 
 class Account:
@@ -27,7 +28,7 @@ class Transfer:
 
 
 class Accounts:
-    PARTITION = ['examples', 'accounts']
+    PARTITION = [USER_NAME, 'accounts']
 
     def __init__(self, session: Session):
         self._session = session
@@ -73,7 +74,7 @@ class Accounts:
 
 
 class Transfers:
-    PARTITION = ['examples', 'transfers']
+    PARTITION = [USER_NAME, 'transfers']
 
     def __init__(self, session: Session):
         self._session = session
@@ -164,8 +165,8 @@ class Transactor:
 
 async def run():
     # init session
-    session = Session(port=5678)
-    await session.login('examples', 'examples')
+    session = Session(host='api.acapella.ru', port=5678)
+    await session.login(USER_NAME, PASSWORD)
 
     # init model
     model = Model(session)
