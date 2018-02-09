@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from acapella.kv.Cursor import Cursor
+from acapella.kv.consts import API_PREFIX
 from acapella.kv.Transaction import Transaction
 from acapella.kv.utils.assertion import check_key, check_nrw
 from acapella.kv.utils.collections import remove_none_values
@@ -57,7 +58,7 @@ class Tree(object):
         tx_index = transaction.index if transaction is not None else None
 
         response = await self._session.get(
-            f'/astorage/v2/dt/{key_to_str(self._name)}/keys',
+            f'{API_PREFIX}/v2/dt/{key_to_str(self._name)}/keys',
             params=remove_none_values({
                 'from': key_to_str(first),
                 'to': key_to_str(last),

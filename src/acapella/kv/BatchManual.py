@@ -4,6 +4,7 @@ from typing import List, Optional, Dict, Tuple
 import asyncio
 
 from acapella.kv.BatchBase import BatchBase
+from acapella.kv.consts import API_PREFIX
 from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
 
 
@@ -103,7 +104,7 @@ class BatchManual(BatchBase):
         self._future.set_result(None)
 
     async def _send_partition(self, partition: Tuple[str, ...], batch: PartitionBatch):
-        url = f'/astorage/v2/kv/partition/{key_to_str(partition)}'
+        url = f'{API_PREFIX}/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.put(url, params={
             'n': batch.n,
             'r': batch.r,

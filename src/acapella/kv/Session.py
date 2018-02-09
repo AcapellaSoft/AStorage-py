@@ -5,6 +5,7 @@ from aiohttp import BasicAuth
 from requests.adapters import DEFAULT_RETRIES
 from urllib3 import Retry
 
+from acapella.kv.consts import API_PREFIX
 from acapella.kv.BatchManual import BatchManual
 from acapella.kv.Entry import Entry
 from acapella.kv.PartitionIndex import PartitionIndex
@@ -86,7 +87,7 @@ class Session(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         if index is None:
-            response = await self._session.post('/astorage/v2/tx')
+            response = await self._session.post(f'{API_PREFIX}/v2/tx')
             raise_if_error(response.status)
             body = await response.json()
             index = int(body['index'])
@@ -181,7 +182,7 @@ class Session(object):
         check_limit(limit)
         check_clustering(prefix)
 
-        url = f'/astorage/v2/kv/partition/{key_to_str(partition)}'
+        url = f'{API_PREFIX}/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.get(url, params=remove_none_values({
             'from': first and key_to_str(first),
             'to': last and key_to_str(last),

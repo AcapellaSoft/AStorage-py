@@ -1,6 +1,7 @@
 from acapella.kv.Transaction import Transaction
 
 from acapella.kv.utils.http import raise_if_error, AsyncSession
+from acapella.kv.consts import API_PREFIX
 
 
 class TransactionContext(object):
@@ -19,7 +20,7 @@ class TransactionContext(object):
         if self._tx is not None:
             raise RuntimeError("This transaction context already in entered state")
 
-        response = await self._session.post('/astorage/v2/tx')
+        response = await self._session.post(f'{API_PREFIX}/v2/tx')
         raise_if_error(response.status)
         body = await response.json()
         index = int(body['index'])

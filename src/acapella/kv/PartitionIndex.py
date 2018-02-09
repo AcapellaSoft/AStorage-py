@@ -2,6 +2,7 @@ from typing import List, Optional, Dict
 
 from acapella.kv import Entry
 from acapella.kv.IndexField import IndexField
+from acapella.kv.consts import API_PREFIX
 from acapella.kv.utils.http import AsyncSession, raise_if_error, key_to_str
 
 
@@ -32,7 +33,7 @@ class PartitionIndex(object):
         self._partition = partition
 
     async def query(self, query: Dict[str, QueryCondition], limit: Optional[int] = None) -> List[Entry]:
-        url = f'/astorage/v2/kv/partition/{key_to_str(self._partition)}/index-query'
+        url = f'{API_PREFIX}/v2/kv/partition/{key_to_str(self._partition)}/index-query'
         response = await self._session.get(url, json={
             'params': {
                'limit': limit
@@ -44,14 +45,14 @@ class PartitionIndex(object):
         return [Entry(self._session, self._partition, e['key'], 0, e.get('value'), 3, 2, 2, None) for e in data]
 
     async def set_index(self, tag: int, fields: List[IndexField]):
-        url = f'/astorage/v2/users/{self._user}/keyspaces/{self._keyspace}/indexes/{tag}'
+        url = f'{API_PREFIX}/v2/users/{self._user}/keyspaces/{self._keyspace}/indexes/{tag}'
         response = await self._session.put(url, json={
             'fields': [f.to_json() for f in fields]
         })
         raise_if_error(response.status)
 
     async def get_indexes(self) -> Dict[int, List[IndexField]]:
-        url = f'/astorage/v2/users/{self._user}/keyspaces/{self._keyspace}/indexes'
+        url = f'{API_PREFIX}/v2/users/{self._user}/keyspaces/{self._keyspace}/indexes'
         response = await self._session.get(url)
         raise_if_error(response.status)
         data = await response.json()

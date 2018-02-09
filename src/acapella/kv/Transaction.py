@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from acapella.kv.Entry import Entry
+from acapella.kv.consts import API_PREFIX
 from acapella.kv.utils.http import AsyncSession, raise_if_error
 
 
@@ -23,7 +24,7 @@ class Transaction(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере         
         """
         if not self._completed:
-            response = await self._session.post(f'/astorage/v2/tx/{self._index}/commit')
+            response = await self._session.post(f'{API_PREFIX}/v2/tx/{self._index}/commit')
             raise_if_error(response.status)
             self._completed = True
 
@@ -36,7 +37,7 @@ class Transaction(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         if not self._completed:
-            response = await self._session.post(f'/astorage/v2/tx/{self._index}/rollback')
+            response = await self._session.post(f'{API_PREFIX}/v2/tx/{self._index}/rollback')
             raise_if_error(response.status)
             self._completed = True
 
@@ -50,7 +51,7 @@ class Transaction(object):
         :raise TransactionCompletedError: когда транзакция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        response = await self._session.post(f'/astorage/v2/tx/{self._index}/keep-alive')
+        response = await self._session.post(f'{API_PREFIX}/v2/tx/{self._index}/keep-alive')
         raise_if_error(response.status)
 
     async def get_entry(self, partition: List[str], clustering: Optional[List[str]] = None,

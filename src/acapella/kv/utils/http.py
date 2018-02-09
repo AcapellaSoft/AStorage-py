@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 from aiohttp import ClientSession, ClientResponse
 
+from acapella.kv.consts import API_PREFIX
 from acapella.kv.utils.errors import CasError, TransactionNotFoundError, TransactionCompletedError, KvError, \
     AuthenticationFailedError
 
@@ -15,8 +16,8 @@ def key_to_str(key: Iterable[str]) -> str:
 
 def entry_url(partition: List[str], clustering: Optional[List[str]] = None) -> str:
     if clustering is None or len(clustering) == 0:
-        return f'/astorage/v2/kv/keys/{key_to_str(partition)}'
-    return f'/astorage/v2/kv/partition/{key_to_str(partition)}/clustering/{key_to_str(clustering)}'
+        return f'{API_PREFIX}/v2/kv/keys/{key_to_str(partition)}'
+    return f'{API_PREFIX}/v2/kv/partition/{key_to_str(partition)}/clustering/{key_to_str(clustering)}'
 
 
 def raise_if_error(code: int):
