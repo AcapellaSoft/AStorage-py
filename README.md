@@ -1,7 +1,7 @@
 Описание
 --------
 
-Асинхронный Python-клиент для Key-Value базы данных [AcapellaDB](http://acapella.ru/cpvm_doc/#acapelladb).
+Асинхронный Python-клиент для Key-Value базы данных [AcapellaDB](http://acapella.ru/acapelladb_doc/data-model/).
 
 Примеры использования
 ---------------------
