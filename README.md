@@ -1,7 +1,7 @@
 Описание
 --------
 
-Асинхронный Python-клиент для Key-Value базы данных [AcapellaDB](http://acapella.ru/nosql/storage.html).
+Асинхронный Python-клиент для Key-Value базы данных [AcapellaDB](http://acapella.ru/cpvm_doc/#acapelladb).
 
 Примеры использования
 ---------------------
