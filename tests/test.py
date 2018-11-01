@@ -6,10 +6,10 @@ from unittest import TestCase, main
 import requests
 from urllib3 import Retry
 
-from acapella.kv import Session
-from acapella.kv.IndexField import IndexField, IndexFieldType, IndexFieldOrder
-from acapella.kv.PartitionIndex import QueryCondition
-from acapella.kv.utils.errors import CasError
+from acapelladb import Session
+from acapelladb.IndexField import IndexField, IndexFieldType, IndexFieldOrder
+from acapelladb.PartitionIndex import QueryCondition
+from acapelladb.utils.errors import CasError
 
 USER = 'user'
 PASSWORD = 'password'

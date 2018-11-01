@@ -3,10 +3,10 @@ from typing import List, Optional, Awaitable, Callable
 
 import asyncio
 
-from acapella.kv.BatchBase import BatchBase
-from acapella.kv.utils.assertion import check_key, check_nrw
-from acapella.kv.utils.collections import remove_none_values
-from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url
+from acapelladb.BatchBase import BatchBase
+from acapelladb.utils.assertion import check_key, check_nrw
+from acapelladb.utils.collections import remove_none_values
+from acapelladb.utils.http import AsyncSession, raise_if_error, entry_url
 
 
 class Entry(object):

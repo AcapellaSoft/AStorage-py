@@ -3,9 +3,9 @@ from typing import List, Optional, Dict, Tuple
 
 import asyncio
 
-from acapella.kv.BatchBase import BatchBase
-from acapella.kv.consts import API_PREFIX
-from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
+from acapelladb.BatchBase import BatchBase
+from acapelladb.consts import API_PREFIX
+from acapelladb.utils.http import AsyncSession, key_to_str, raise_if_error
 
 
 class BatchEntry(object):

@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from uuid import UUID, uuid4
 
-from acapella.kv import Session
-from acapella.kv.IndexField import IndexField, IndexFieldType, IndexFieldOrder
-from acapella.kv.PartitionIndex import QueryCondition
+from acapelladb import Session
+from acapelladb.IndexField import IndexField, IndexFieldType, IndexFieldOrder
+from acapelladb.PartitionIndex import QueryCondition
 from examples.credentials import USER_NAME, PASSWORD
 
 

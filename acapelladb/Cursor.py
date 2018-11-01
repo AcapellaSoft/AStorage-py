@@ -1,9 +1,9 @@
 from typing import List, Optional
 
-from acapella.kv.consts import API_PREFIX
-from acapella.kv.utils.collections import remove_none_values
-from acapella.kv.utils.http import AsyncSession, key_to_str, raise_if_error
-from acapella.kv.utils.assertion import check_key, check_nrw
+from acapelladb.consts import API_PREFIX
+from acapelladb.utils.collections import remove_none_values
+from acapelladb.utils.http import AsyncSession, key_to_str, raise_if_error
+from acapelladb.utils.assertion import check_key, check_nrw
 
 
 class Cursor(object):

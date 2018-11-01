@@ -5,8 +5,8 @@ from urllib.parse import quote
 
 from aiohttp import ClientSession, ClientResponse
 
-from acapella.kv.consts import API_PREFIX
-from acapella.kv.utils.errors import CasError, TransactionNotFoundError, TransactionCompletedError, KvError, \
+from acapelladb.consts import API_PREFIX
+from acapelladb.utils.errors import CasError, TransactionNotFoundError, TransactionCompletedError, KvError, \
     AuthenticationFailedError
 
 

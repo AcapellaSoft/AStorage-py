@@ -1,7 +1,7 @@
-from acapella.kv.Transaction import Transaction
+from acapelladb.Transaction import Transaction
 
-from acapella.kv.utils.http import raise_if_error, AsyncSession
-from acapella.kv.consts import API_PREFIX
+from acapelladb.utils.http import raise_if_error, AsyncSession
+from acapelladb.consts import API_PREFIX
 
 
 class TransactionContext(object):

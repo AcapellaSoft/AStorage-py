@@ -1,8 +1,8 @@
 from typing import List, Optional
 
-from acapella.kv.Entry import Entry
-from acapella.kv.consts import API_PREFIX
-from acapella.kv.utils.http import AsyncSession, raise_if_error
+from acapelladb.Entry import Entry
+from acapelladb.consts import API_PREFIX
+from acapelladb.utils.http import AsyncSession, raise_if_error
 
 
 class Transaction(object):
