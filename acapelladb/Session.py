@@ -5,16 +5,16 @@ from aiohttp import BasicAuth
 from requests.adapters import DEFAULT_RETRIES
 from urllib3 import Retry
 
-from acapella.kv.consts import API_PREFIX
-from acapella.kv.BatchManual import BatchManual
-from acapella.kv.Entry import Entry
-from acapella.kv.PartitionIndex import PartitionIndex
-from acapella.kv.Transaction import Transaction
-from acapella.kv.TransactionContext import TransactionContext
-from acapella.kv.Tree import Tree
-from acapella.kv.utils.assertion import check_key, check_clustering, check_limit
-from acapella.kv.utils.collections import remove_none_values
-from acapella.kv.utils.http import AsyncSession, raise_if_error, entry_url, key_to_str
+from acapelladb.consts import API_PREFIX
+from acapelladb.BatchManual import BatchManual
+from acapelladb.Entry import Entry
+from acapelladb.PartitionIndex import PartitionIndex
+from acapelladb.Transaction import Transaction
+from acapelladb.TransactionContext import TransactionContext
+from acapelladb.Tree import Tree
+from acapelladb.utils.assertion import check_key, check_clustering, check_limit
+from acapelladb.utils.collections import remove_none_values
+from acapelladb.utils.http import AsyncSession, raise_if_error, entry_url, key_to_str
 
 
 class Session(object):

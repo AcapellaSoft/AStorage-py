@@ -1,9 +1,9 @@
 from typing import List, Optional, Dict
 
-from acapella.kv import Entry
-from acapella.kv.IndexField import IndexField
-from acapella.kv.consts import API_PREFIX
-from acapella.kv.utils.http import AsyncSession, raise_if_error, key_to_str
+from acapelladb import Entry
+from acapelladb.IndexField import IndexField
+from acapelladb.consts import API_PREFIX
+from acapelladb.utils.http import AsyncSession, raise_if_error, key_to_str
 
 
 class QueryCondition(object):

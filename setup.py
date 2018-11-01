@@ -1,11 +1,26 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 
-setup(name='acapelladb',
-      version='0.1.0',
-      description='Python client for AcapellaDB database',
-      url='https://srv.nppsatek.ru:42917/hiload/AStorageClient-py',
-      package_dir={'': 'src'},
-      packages=['acapella.kv'],
+with open('README.md') as f:
+    long_description = f.read()
+
+setup(
+    name='acapelladb',
+    version='0.3.2',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    description='Python client for AcapellaDB database',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.6',
+    ],
+    url='https://github.com/AcapellaSoft/AcapellaDBClient-py',
+    author='Acapella Soft',
+    license='MIT',
+    packages=find_packages(),
+    install_requires=[
+        'aiohttp == 3.4.4',
+    ],
 )

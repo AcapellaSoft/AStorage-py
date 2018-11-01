@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional, List, Tuple
 from uuid import UUID, uuid1, uuid4
 
-from acapella.kv import Session, Transaction
+from acapelladb import Session, Transaction
 from examples.credentials import USER_NAME, PASSWORD
 
 
