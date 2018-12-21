@@ -1,7 +1,6 @@
 from typing import List, Optional
 
 from acapelladb.Cursor import Cursor
-from acapelladb.consts import API_PREFIX
 from acapelladb.Transaction import Transaction
 from acapelladb.utils.assertion import check_key, check_nrw
 from acapelladb.utils.collections import remove_none_values
@@ -9,7 +8,7 @@ from acapelladb.utils.http import AsyncSession, key_to_str, raise_if_error
 
 
 class Tree(object):
-    def __init__(self, session: AsyncSession, name: List[str], n: int, r: int, w: int):
+    def __init__(self, session: AsyncSession, name: List[str], n: int, r: int, w: int, api_prefix: str):
         check_key(name)
         check_nrw(n, r, w)
         self._name = name
@@ -17,6 +16,7 @@ class Tree(object):
         self._n = n
         self._r = r
         self._w = w
+        self._api_prefix = api_prefix
 
     async def get_cursor(self, key: List[str], transaction: Optional[Transaction] = None) -> Cursor:
         """
@@ -38,7 +38,8 @@ class Tree(object):
         :return: Cursor для указанного ключа
         """
         tx_index = transaction.index if transaction is not None else None
-        return Cursor(self._session, self._name, key, 0, None, None, self._n, self._r, self._w, tx_index)
+        return Cursor(self._session, self._name, key, 0, None, None, self._n, self._r, self._w, tx_index,
+                      self._api_prefix)
 
     async def range(self,
                     first: Optional[List[str]] = None,
@@ -58,7 +59,7 @@ class Tree(object):
         tx_index = transaction.index if transaction is not None else None
 
         response = await self._session.get(
-            f'{API_PREFIX}/v2/dt/{key_to_str(self._name)}/keys',
+            f'{self._api_prefix}/v2/dt/{key_to_str(self._name)}/keys',
             params=remove_none_values({
                 'from': key_to_str(first),
                 'to': key_to_str(last),
@@ -74,7 +75,8 @@ class Tree(object):
         body = await response.json()
 
         def cursor_init(k, v):
-            return Cursor(self._session, self._name, k, 0, v, None, self._n, self._r, self._w, tx_index)
+            return Cursor(self._session, self._name, k, 0, v, None, self._n, self._r, self._w, tx_index,
+                          self._api_prefix)
 
         # TODO: версия в DT
         return [cursor_init(c['key'], c['value']) for c in body]
