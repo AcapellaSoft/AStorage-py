@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-from acapelladb.consts import API_PREFIX
 from acapelladb.utils.collections import remove_none_values
 from acapelladb.utils.http import AsyncSession, key_to_str, raise_if_error
 from acapelladb.utils.assertion import check_key, check_nrw
@@ -8,7 +7,7 @@ from acapelladb.utils.assertion import check_key, check_nrw
 
 class Cursor(object):
     def __init__(self, session: AsyncSession, tree: List[str], key: List[str], version: int, value: Optional[any],
-                 node: Optional[str], n: int, r: int, w: int, transaction: Optional[int]):
+                 node: Optional[str], n: int, r: int, w: int, transaction: Optional[int], api_prefix: str):
         check_key(tree)
         check_key(key)
         check_nrw(n, r, w)
@@ -22,6 +21,7 @@ class Cursor(object):
         self._r = r
         self._w = w
         self._transaction = transaction
+        self._api_prefix = api_prefix
 
     async def get(self) -> Optional[any]:
         """
@@ -36,7 +36,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
+            f'{self._api_prefix}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
@@ -66,7 +66,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.put(
-            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
+            f'{self._api_prefix}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
@@ -94,7 +94,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next',
+            f'{self._api_prefix}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/next',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
@@ -109,7 +109,7 @@ class Cursor(object):
 
         body = await response.json()
         return Cursor(self._session, self._tree, body['key'], 0, body.get('value'), body.get('node'),
-                      self._n, self._r, self._w, self._transaction)
+                      self._n, self._r, self._w, self._transaction, self._api_prefix)
 
     async def prev(self) -> Optional['Cursor']:
         """
@@ -122,7 +122,7 @@ class Cursor(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         response = await self._session.get(
-            f'{API_PREFIX}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev',
+            f'{self._api_prefix}/v2/dt/{key_to_str(self._tree)}/keys/{key_to_str(self._key)}/prev',
             params=remove_none_values({
                 'n': self._n,
                 'r': self._r,
@@ -137,7 +137,7 @@ class Cursor(object):
 
         body = await response.json()
         return Cursor(self._session, self._tree, body['key'], 0, body.get('value'), body.get('node'),
-                      self._n, self._r, self._w, self._transaction)
+                      self._n, self._r, self._w, self._transaction, self._api_prefix)
 
     @property
     def value(self) -> Optional[any]:

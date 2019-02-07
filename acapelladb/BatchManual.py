@@ -4,7 +4,6 @@ from typing import List, Optional, Dict, Tuple
 import asyncio
 
 from acapelladb.BatchBase import BatchBase
-from acapelladb.consts import API_PREFIX
 from acapelladb.utils.http import AsyncSession, key_to_str, raise_if_error
 
 
@@ -63,11 +62,12 @@ class PartitionBatch(object):
 
 
 class BatchManual(BatchBase):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, api_prefix: str):
         self._session = session
         self._future = Future()
         self._in_process = True
         self._batch: Dict[Tuple[str, ...], PartitionBatch] = {}
+        self._api_prefix = api_prefix
 
     async def set(self, partition: List[str], clustering: List[str], new_value: Optional[any],
                   reindex: bool, n: int, r: int, w: int) -> int:
@@ -104,7 +104,7 @@ class BatchManual(BatchBase):
         self._future.set_result(None)
 
     async def _send_partition(self, partition: Tuple[str, ...], batch: PartitionBatch):
-        url = f'{API_PREFIX}/v2/kv/partition/{key_to_str(partition)}'
+        url = f'{self._api_prefix}/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.put(url, params={
             'n': batch.n,
             'r': batch.r,

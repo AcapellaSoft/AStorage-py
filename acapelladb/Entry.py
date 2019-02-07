@@ -10,7 +10,7 @@ from acapelladb.utils.http import AsyncSession, raise_if_error, entry_url
 
 
 class Entry(object):
-    def __init__(self, session: AsyncSession, partition: List[str], clustering: List[str],
+    def __init__(self, session: AsyncSession, api_prefix: str, partition: List[str], clustering: List[str],
                  version: int, value: Optional[any], n: int, r: int, w: int, transaction: Optional[int]):
         """
         Создание объекта связанного с указанным ключом. Этот метод предназначен для внутреннего использования.
@@ -26,6 +26,7 @@ class Entry(object):
         self._r = r
         self._w = w
         self._transaction = transaction
+        self._api_prefix = api_prefix
 
     async def get(self, watch: bool = False) -> Optional[any]:
         """
@@ -39,7 +40,7 @@ class Entry(object):
         :raise TransactionCompletedError: когда транзакция, в которой выполняется операция, уже завершена
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
-        url = entry_url(self._partition, self._clustering)
+        url = entry_url(self._api_prefix, self._partition, self._clustering)
         response = await self._session.get(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,
@@ -68,9 +69,9 @@ class Entry(object):
         """
         if wait_version is None:
             wait_version = self._version
-        timeout_seconds = timeout.total_seconds() if timeout is not None else None
+        timeout_seconds = int(timeout.total_seconds()) if timeout is not None else None
 
-        url = entry_url(self._partition, self._clustering)
+        url = entry_url(self._api_prefix, self._partition, self._clustering)
         response = await self._session.get(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,
@@ -109,7 +110,7 @@ class Entry(object):
         return self._version
 
     async def _set_single(self, new_value: Optional[any], reindex: bool):
-        url = entry_url(self._partition, self._clustering)
+        url = entry_url(self._api_prefix, self._partition, self._clustering)
         response = await self._session.put(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,
@@ -151,7 +152,7 @@ class Entry(object):
         return self._version
 
     async def _cas_single(self, new_value: Optional[any], old_version: int, reindex: bool):
-        url = entry_url(self._partition, self._clustering)
+        url = entry_url(self._api_prefix, self._partition, self._clustering)
         response = await self._session.put(url, params=remove_none_values({
             'n': self._n,
             'r': self._r,

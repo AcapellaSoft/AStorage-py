@@ -5,7 +5,6 @@ from aiohttp import BasicAuth
 from requests.adapters import DEFAULT_RETRIES
 from urllib3 import Retry
 
-from acapelladb.consts import API_PREFIX
 from acapelladb.BatchManual import BatchManual
 from acapelladb.Entry import Entry
 from acapelladb.PartitionIndex import PartitionIndex
@@ -18,7 +17,8 @@ from acapelladb.utils.http import AsyncSession, raise_if_error, entry_url, key_t
 
 
 class Session(object):
-    def __init__(self, host: str = '127.0.0.1', port: int = 12000, max_retries: Union[Retry, int] = DEFAULT_RETRIES):
+    def __init__(self, host: str = '127.0.0.1', port: int = 12000, max_retries: Union[Retry, int] = DEFAULT_RETRIES,
+                 api_prefix: str = '/acapelladb'):
         """
         Создание HTTP-сессии для взаимодействия с KV. 
         
@@ -28,6 +28,11 @@ class Session(object):
         """
         base_url = f'http://{host}:{port}'
         self._session = AsyncSession(base_url=base_url)
+        self._api_prefix = api_prefix
+
+    @property
+    def api_prefix(self) -> str:
+        return self._api_prefix
 
     @staticmethod
     def _format_basic_auth(user: str, password: str) -> str:
@@ -74,7 +79,7 @@ class Session(object):
             
         :return: контекст транзакции
         """
-        return TransactionContext(self._session)
+        return TransactionContext(self._session, self._api_prefix)
 
     async def transaction_manual(self, index: Optional[int] = None) -> Transaction:
         """
@@ -87,7 +92,7 @@ class Session(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         if index is None:
-            response = await self._session.post(f'{API_PREFIX}/v2/tx')
+            response = await self._session.post(f'{self.api_prefix}/v2/tx')
             raise_if_error(response.status)
             body = await response.json()
             index = int(body['index'])
@@ -108,7 +113,7 @@ class Session(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         clustering = clustering or []
-        entry = Entry(self._session, partition, clustering, 0, None, n, r, w, None)
+        entry = Entry(self._session, self._api_prefix, partition, clustering, 0, None, n, r, w, None)
         await entry.get()
         return entry
 
@@ -127,7 +132,7 @@ class Session(object):
         :raise KvError: когда произошла неизвестная ошибка на сервере
         """
         clustering = clustering or []
-        url = f'{entry_url(partition, clustering)}/version'
+        url = f'{entry_url(self._api_prefix, partition, clustering)}/version'
         response = await self._session.get(url, params={
             'n': n,
             'r': r,
@@ -151,7 +156,7 @@ class Session(object):
         :return: Entry для указанного ключа
         """
         clustering = clustering or []
-        return Entry(self._session, partition, clustering, 0, None, n, r, w, None)
+        return Entry(self._session, self._api_prefix, partition, clustering, 0, None, n, r, w, None)
 
     async def range(self,
                     partition: List[str],
@@ -182,7 +187,7 @@ class Session(object):
         check_limit(limit)
         check_clustering(prefix)
 
-        url = f'{API_PREFIX}/v2/kv/partition/{key_to_str(partition)}'
+        url = f'{self.api_prefix}/v2/kv/partition/{key_to_str(partition)}'
         response = await self._session.get(url, params=remove_none_values({
             'from': first and key_to_str(first),
             'to': last and key_to_str(last),
@@ -194,7 +199,7 @@ class Session(object):
         }))
         raise_if_error(response.status)
         body = await response.json()
-        return [Entry(self._session, partition, e['key'], e['version'], e.get('value'), n, r, w, None) for e in body]
+        return [Entry(self._session, self._api_prefix, partition, e['key'], e['version'], e.get('value'), n, r, w, None) for e in body]
 
     def tree(self, tree: List[str], n: int = 3, r: int = 2, w: int = 2) -> Tree:
         """
@@ -205,10 +210,10 @@ class Session(object):
         :param w: количество ответов для подтверждения записи
         :return: Tree
         """
-        return Tree(self._session, tree, n, r, w)
+        return Tree(self._session, tree, n, r, w, self._api_prefix)
 
     def batch_manual(self) -> BatchManual:
-        return BatchManual(self._session)
+        return BatchManual(self._session, self._api_prefix)
 
     def partition_index(self, partition: List[str]) -> PartitionIndex:
-        return PartitionIndex(self._session, partition)
+        return PartitionIndex(self._session, partition, self._api_prefix)
