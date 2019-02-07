@@ -69,7 +69,7 @@ class Entry(object):
         """
         if wait_version is None:
             wait_version = self._version
-        timeout_seconds = timeout.total_seconds() if timeout is not None else None
+        timeout_seconds = int(timeout.total_seconds()) if timeout is not None else None
 
         url = entry_url(self._api_prefix, self._partition, self._clustering)
         response = await self._session.get(url, params=remove_none_values({
