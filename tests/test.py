@@ -14,13 +14,7 @@ from acapelladb.utils.errors import CasError
 USER = 'user'
 PASSWORD = 'password'
 
-retry = Retry(
-    total=3,
-    connect=3,
-    read=3,
-    backoff_factor=0.3
-)
-session = Session(port=5678, max_retries=retry)
+session = Session(port=5678)
 
 requests.post('http://localhost:5678/auth/signup', json={
     'username': USER,
