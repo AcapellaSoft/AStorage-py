@@ -17,14 +17,13 @@ from acapelladb.utils.http import AsyncSession, raise_if_error, entry_url, key_t
 
 
 class Session(object):
-    def __init__(self, host: str = '127.0.0.1', port: int = 12000, max_retries: Union[Retry, int] = DEFAULT_RETRIES,
+    def __init__(self, host: str = '127.0.0.1', port: int = 12000,
                  api_prefix: str = '/acapelladb'):
         """
         Создание HTTP-сессии для взаимодействия с KV. 
         
         :param host: хост
         :param port: порт
-        :param max_retries: стратегия повторных попыток при таймауте или число повторных попыток
         """
         base_url = f'http://{host}:{port}'
         self._session = AsyncSession(base_url=base_url)
