@@ -21,7 +21,7 @@ setup(
     license='MIT',
     packages=find_packages(),
     install_requires=[
-        'aiohttp == 3.4.4',
+        'aiohttp == 3.7.4',
         'requests == 2.20.0',
     ],
 )
